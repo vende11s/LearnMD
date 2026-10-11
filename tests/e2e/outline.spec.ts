@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.use({ locale: 'en-US', reducedMotion: 'reduce' });
 
-test('a long outline scrolls independently and keeps the active heading visible in a short window', async ({
+test('a long outline scrolls independently in both directions, including at its boundaries', async ({
   page,
 }) => {
   await page.goto('/');
@@ -56,8 +56,9 @@ test('a long outline scrolls independently and keeps the active heading visible 
   expect(await workspace.evaluate((element) => element.scrollTop)).toBe(
     initialPosition,
   );
+  const outlinePosition = await nav.evaluate((element) => element.scrollTop);
 
-  // Reading the document updates the outline without moving the document again.
+  // Reading changes the highlighted entry, never the user's outline position.
   const readingPosition = await workspace.evaluate((element) => {
     const heading = document.getElementById('section-50')!;
     const top =
@@ -70,14 +71,23 @@ test('a long outline scrolls independently and keeps the active heading visible 
   });
   const current = nav.getByRole('button', { name: 'Section 50', exact: true });
   await expect(current).toHaveAttribute('aria-current', 'location');
-  await expect(current).toBeInViewport({ ratio: 1 });
+  expect(await nav.evaluate((element) => element.scrollTop)).toBe(
+    outlinePosition,
+  );
   expect(await workspace.evaluate((element) => element.scrollTop)).toBeCloseTo(
     readingPosition,
     0,
   );
+  await page.locator('.reader-column').hover();
+  await page.mouse.wheel(0, 450);
+  await expect
+    .poll(() => workspace.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(readingPosition + 100);
+  expect(await nav.evaluate((element) => element.scrollTop)).toBe(
+    outlinePosition,
+  );
 
   await page.setViewportSize({ width: 1440, height: 480 });
-  await expect(current).toBeInViewport({ ratio: 1 });
   await expect(
     page.getByRole('button', { name: 'Print note', exact: true }),
   ).toBeInViewport({ ratio: 1 });
@@ -88,9 +98,26 @@ test('a long outline scrolls independently and keeps the active heading visible 
         .evaluate((element) => element.getBoundingClientRect().bottom),
     )
     .toBeLessThanOrEqual(480);
+  expect(await nav.evaluate((element) => element.scrollTop)).toBe(
+    outlinePosition,
+  );
   const positionAfterResize = await workspace.evaluate(
     (element) => element.scrollTop,
   );
+
+  // Wheel input must stop at either end of the outline, not chain to the note.
+  for (const delta of [-500, 500]) {
+    await nav.evaluate((element, direction) => {
+      element.scrollTop = direction < 0 ? 0 : element.scrollHeight;
+    }, delta);
+    await nav.hover();
+    await page.mouse.wheel(0, delta);
+    // Wheel scrolling is asynchronous, including when the target cannot move.
+    await page.waitForTimeout(150);
+    expect(await workspace.evaluate((element) => element.scrollTop)).toBe(
+      positionAfterResize,
+    );
+  }
 
   // Keyboard focus can reach clipped links through the outline's own scrollport.
   await current.focus();
@@ -101,7 +128,7 @@ test('a long outline scrolls independently and keeps the active heading visible 
   expect(await workspace.evaluate((element) => element.scrollTop)).toBe(
     positionAfterResize,
   );
-  await page.keyboard.press('Enter');
+  await last.click();
   await expect(
     page.getByRole('heading', { name: /^Section 60/, level: 2 }),
   ).toBeInViewport();

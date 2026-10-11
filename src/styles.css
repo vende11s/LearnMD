@@ -973,6 +973,7 @@ kbd {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
+  overflow-anchor: none;
 }
 .document-outline nav button {
   flex-shrink: 0;

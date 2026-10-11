@@ -11,9 +11,9 @@ import { useI18n } from '../i18n';
 import { sourceProps } from '../reader/source';
 import { readingMinutes } from '../format/summary';
 
-function revealOutlineItem(
+function revealFocusedOutlineItem(
   nav: HTMLElement | null,
-  button = nav?.querySelector<HTMLElement>('[aria-current="location"]'),
+  button: HTMLElement,
 ) {
   if (!nav || !button || nav.clientHeight === 0) return;
   const bounds = nav.getBoundingClientRect();
@@ -134,16 +134,12 @@ export function ReaderView({
         '--reader-viewport-height',
         `${workspace.clientHeight}px`,
       );
-      revealOutlineItem(outlineNavRef.current);
     };
     resize();
     const observer = new ResizeObserver(resize);
     observer.observe(workspace);
     return () => observer.disconnect();
   }, [mainRef, outline]);
-  useLayoutEffect(() => {
-    revealOutlineItem(outlineNavRef.current);
-  }, [active, outline]);
   return (
     <div className={`reader-layout ${outline ? 'with-outline' : ''}`}>
       <div className="reader-column" ref={contentRef}>
@@ -238,7 +234,7 @@ export function ReaderView({
                   // Correct partial clipping after the browser's focus scroll.
                   requestAnimationFrame(() => {
                     if (button.ownerDocument.activeElement === button)
-                      revealOutlineItem(outlineNavRef.current, button);
+                      revealFocusedOutlineItem(outlineNavRef.current, button);
                   });
                 }}
                 onClick={() => {
