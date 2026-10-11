@@ -10,7 +10,7 @@ Local verification on 11 October 2026 using Node.js 22.20.0 on Windows, after ad
 | Chromium end-to-end workflows                                                                     | 20 passing                              |
 | Project-path production build reopening notes, images, and guide offline                          | 1 passing                               |
 | npm dependency audit                                                                              | Previous audit: 0 known vulnerabilities |
-| Firefox browser execution                                                                         | Checked by Ubuntu CI; local limit below |
+| Firefox browser execution                                                                         | 20 passing on Ubuntu CI                 |
 
 ## End-to-end scope
 
@@ -26,11 +26,11 @@ Onboarding scenarios verify the one-guide library, removed decorative text, the 
 
 The UI and security review led to fixes for partial batch writes, unsafe replacement collisions, stale image attachments on paste replacement, excessive folder-restore work, decoded asset bounds, hidden semantic targets, hash-route interference, reading-position races, scroll overflow, and service-worker cache matching. The final local suite rechecked these behaviors against the current revision.
 
-## Previous deployment verification
+## Deployment verification
 
-[GitHub Actions run 38167646320](https://github.com/vende11s/LearnMD/actions/runs/38167646320) passed 261 unit tests, the production build, and all 33 browser tests (16 Chromium, 16 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
+[GitHub Actions run 38169031381](https://github.com/vende11s/LearnMD/actions/runs/38169031381) passed 277 unit tests, the production build, and all 41 browser tests (20 Chromium, 20 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
 
-The published site at [vende11s.github.io/LearnMD/](https://vende11s.github.io/LearnMD/) returned HTTP 200 and passed an additional Chromium smoke test covering the six-note library, Settings without Reading or density controls, Polish language switching, the English prompt and its output-language instruction, all 65 guide entries, carousel interaction, source copying, mathematical rendering, and offline reload. The worker scope was exactly `/LearnMD/`, with no page errors or failed application responses.
+The published site at [vende11s.github.io/LearnMD/](https://vende11s.github.io/LearnMD/) returned HTTP 200 and passed an additional Chromium smoke test covering the single Polish guide, removed decorative UI, exactly two import choices, the import-to-generation action, English authored-guide localization, quiz carousel interaction, and offline reload with mathematical rendering. The import dialog was also checked at 390 pixels and visually inspected. No page errors or failed application responses were recorded.
 
 ## Local verification limit
 
