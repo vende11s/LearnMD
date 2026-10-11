@@ -50,7 +50,7 @@ import { I18nProvider, useI18n } from './i18n';
 import { PUBLIC_COMPONENTS } from './format/registry';
 
 function AppInner() {
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const [route, setRoute] = useState(
     () => decodeURI(location.hash.slice(1)) || 'library',
   );
@@ -118,12 +118,14 @@ function AppInner() {
     let live = true;
     void (async () => {
       try {
-        await initializeLibrary();
+        await initializeLibrary(db, language);
         const currentPath = decodeURI(location.hash.slice(1));
         if (
           live &&
-          currentPath.startsWith('folder/') &&
-          !(await db.folders.get(currentPath.slice(7)))
+          ((currentPath.startsWith('folder/') &&
+            !(await db.folders.get(currentPath.slice(7)))) ||
+            (currentPath.startsWith('note/') &&
+              !(await db.notes.get(currentPath.slice(5)))))
         )
           navigate('library');
         if (live) setReady(true);
@@ -142,7 +144,7 @@ function AppInner() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [language, navigate, t]);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -357,13 +359,11 @@ function AppInner() {
               <HardDrive size={17} />
             </span>
             <div>
-              {t('Yours. On this device.', 'Twoje. Na tym urządzeniu.')}
-              <small>
-                {t(
-                  'No account. Just your curiosity.',
-                  'Bez konta. Wystarczy ciekawość.',
-                )}
-              </small>
+              {t(
+                'All notes are stored on this device.',
+                'Wszystkie notatki są na tym urządzeniu.',
+              )}
+              <small>{t('No cloud.', 'Bez chmury.')}</small>
             </div>
             <span className="status-dot" />
           </div>
@@ -415,7 +415,7 @@ function AppInner() {
             <span>{pageName}</span>
           </div>
           <div className="topbar-actions">
-            {note ? (
+            {note && (
               <>
                 <button
                   className={`icon-button ${note.favorite ? 'is-favorite' : ''}`}
@@ -464,11 +464,6 @@ function AppInner() {
                   <MoreHorizontal size={20} />
                 </button>
               </>
-            ) : (
-              <span className="local-badge">
-                <ShieldCheck size={14} />
-                {t('LOCAL WORKSPACE', 'LOKALNA PRZESTRZEŃ')}
-              </span>
             )}
           </div>
         </header>
@@ -554,8 +549,8 @@ function AppInner() {
                   <h3>{t('Bring your materials', 'Dodaj swoje materiały')}</h3>
                   <p>
                     {t(
-                      'Paste it into ChatGPT, Claude, or any LLM with your slides, chapters, or source notes.',
-                      'Wklej go do ChatGPT, Claude lub innego modelu wraz ze slajdami, rozdziałami lub notatkami źródłowymi.',
+                      'Paste it into ChatGPT, Claude, Gemini, or another LLM with your slides, PDFs, exercise sets, or notes — or simply describe the topic you want to learn.',
+                      'Wklej go do ChatGPT, Claude, Gemini lub innego modelu wraz ze slajdami, PDF-ami, zestawami zadań lub notatkami — albo po prostu opisz temat, którego chcesz się nauczyć.',
                     )}
                   </p>
                 </div>
@@ -683,6 +678,10 @@ function AppInner() {
           folders={folders}
           initialFolder={folderId}
           onClose={() => setImporting(false)}
+          onGenerate={() => {
+            setImporting(false);
+            navigate('generate');
+          }}
           onImported={(id) => {
             setImporting(false);
             navigate(`note/${id}`);

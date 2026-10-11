@@ -105,7 +105,7 @@ export function ReaderView({
             {Math.max(1, Math.ceil(parsed.wordCount / 220))}{' '}
             {t('MIN READ', 'MIN CZYTANIA')} <span>·</span>{' '}
             {note.sample
-              ? t('EXAMPLE NOTE', 'PRZYKŁADOWA NOTATKA')
+              ? t('GETTING STARTED', 'PRZEWODNIK')
               : t('LOCAL COPY', 'KOPIA LOKALNA')}
           </div>
         </div>

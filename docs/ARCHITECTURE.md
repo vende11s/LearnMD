@@ -23,9 +23,9 @@ The core workflow uses standard file inputs, drag and drop, pasted text, and Ind
 
 ## Content as a verification surface
 
-The six substantial sample chapters cover calculus, linear algebra, algorithms, networks, physics, and history. They use components where interaction supports understanding: progressive mathematical reasoning, alternative interpretations, inspectable structures, evidence evaluation, and questions with explanations. They are authored with the same public format as imported documents, so parsing them is an integration check rather than a privileged demo path.
+One root-level LearnMD guide introduces the workflow in English or Polish and demonstrates progressive reasoning, alternative views, and a carousel with varied interactive questions. It uses the same public format as imported notes. A transactional migration removes known legacy sample records, preserves personal imports, and seeds the guide once. A stored ownership snapshot allows language changes to refresh only the unmodified built-in guide, retaining organization and reading state. Deletion or content customization stops automatic updates; changing language never recreates a deleted guide.
 
-The component showcase complements those realistic chapters by exposing every registered component, including combinations and edge cases. Automated checks should cover parser boundaries, interaction transitions, storage mutations, import and replacement semantics, prompt consistency, and unsafe input. Browser verification covers the complete workflow, reload persistence, printing, themes, and narrow layouts.
+The component showcase complements the guide by exposing every registered component, including combinations and edge cases. Automated checks cover parser boundaries, interaction transitions, storage mutations, import and replacement semantics, prompt consistency, and unsafe input. Browser verification covers the complete workflow, reload persistence, printing, themes, and narrow layouts.
 
 ## Deliberate exclusions
 

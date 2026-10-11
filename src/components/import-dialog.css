@@ -1,0 +1,18 @@
+.import-introduction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.import-introduction .modal-intro {
+  margin: 0;
+}
+.import-introduction .import-generate {
+  gap: 7px;
+  padding: 7px 10px;
+  font-size: 11px;
+  color: var(--accent);
+  white-space: nowrap;
+}

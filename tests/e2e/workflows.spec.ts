@@ -66,11 +66,11 @@ test.beforeEach(async ({ page }) => {
   await expect(
     page.getByRole('heading', {
       level: 2,
-      name: 'The art of understanding change',
+      name: 'Your first steps with LearnMD',
       exact: true,
     }),
   ).toBeVisible();
-  await expect(page.locator('.note-card')).toHaveCount(6);
+  await expect(page.locator('.note-card')).toHaveCount(1);
 });
 
 test('copy prompt → validate paste → read, interact, and reload the local copy', async ({
@@ -235,9 +235,12 @@ test('file import and duplicate replacement are explicit and preserve favorites'
     replacement.getByRole('button', { name: 'Import & open' }),
   ).toBeDisabled();
   await replacement.getByLabel('Import as').selectOption('replace');
-  await expect(replacement.getByLabel('Replace this local copy')).toHaveValue(
-    originalRoute.split('/').at(-1)!,
-  );
+  await expect(
+    replacement.getByRole('button', { name: 'Replace & open' }),
+  ).toBeDisabled();
+  await replacement
+    .getByLabel('Note to replace')
+    .selectOption(originalRoute.split('/').at(-1)!);
   await replacement.getByRole('button', { name: 'Replace & open' }).click();
   await expect(replacement).not.toBeVisible();
   expect(page.url()).toBe(originalRoute);
@@ -254,7 +257,7 @@ test('file import and duplicate replacement are explicit and preserve favorites'
     .getByRole('navigation', { name: 'Main navigation' })
     .getByRole('button', { name: /All notes/ })
     .click();
-  await expect(page.locator('.note-card')).toHaveCount(7);
+  await expect(page.locator('.note-card')).toHaveCount(2);
 });
 
 test('nested folders organize notes and safely reparent them on deletion', async ({
@@ -323,7 +326,7 @@ test('desktop, dark mode, and narrow reading layouts remain usable', async ({
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'The art of understanding change',
+      name: 'Your first steps with LearnMD',
     }),
   ).toBeVisible();
   expect(
@@ -350,7 +353,7 @@ test('desktop, dark mode, and narrow reading layouts remain usable', async ({
   await expect(
     page.getByRole('heading', {
       level: 2,
-      name: 'The art of understanding change',
+      name: 'Your first steps with LearnMD',
       exact: true,
     }),
   ).toBeVisible();
@@ -403,7 +406,7 @@ test('bundled local images survive a portable backup and restore', async ({
     .locator('.settings-page input[type=file]')
     .setInputFiles(backupPath);
   await expect(
-    page.getByText('Restored 7 notes as new copies.', { exact: true }),
+    page.getByText('Restored 2 notes as new copies.', { exact: true }),
   ).toBeVisible();
   await page.getByLabel('Search notes').fill('A chapter with a local figure');
   await expect(page.locator('.note-card')).toHaveCount(2);

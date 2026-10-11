@@ -1,16 +1,16 @@
 # Verification record
 
-Verification on 11 October 2026 using Node.js 22.20.0 on Windows, after simplifying the reader and format. The same revision also passed the full GitHub Actions suite on Ubuntu with Node.js 22.
+Local verification on 11 October 2026 using Node.js 22.20.0 on Windows, after adding the localized onboarding guide and simplifying the import flow. GitHub Actions checks the same source on Ubuntu with Node.js 22 before deployment.
 
-| Check                                                                                              | Result                                     |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Complete unit suite: format, renderer, interface, storage, migration, security, and sample content | 261 passing across 11 files                |
-| Six substantive sample chapters and their LaTeX expressions                                        | 6 passing, included in the unit total      |
-| TypeScript and production build                                                                    | Passing                                    |
-| Chromium end-to-end workflows                                                                      | 16 passing                                 |
-| Project-path production build reopening notes, images, and guide offline                           | 1 passing                                  |
-| npm dependency audit                                                                               | Previous audit: 0 known vulnerabilities    |
-| Firefox browser execution                                                                          | 16 passing on Ubuntu CI; local limit below |
+| Check                                                                                             | Result                                  |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Complete unit suite: format, renderer, interface, storage, migration, security, and guide content | 277 passing across 12 files             |
+| English/Polish guide, interactive answers, metadata, and LaTeX                                    | 5 passing, included in the unit total   |
+| TypeScript and production build                                                                   | Passing                                 |
+| Chromium end-to-end workflows                                                                     | 20 passing                              |
+| Project-path production build reopening notes, images, and guide offline                          | 1 passing                               |
+| npm dependency audit                                                                              | Previous audit: 0 known vulnerabilities |
+| Firefox browser execution                                                                         | Checked by Ubuntu CI; local limit below |
 
 ## End-to-end scope
 
@@ -20,11 +20,13 @@ Additional scenarios verify Polish system-language initialization, English prefe
 
 Desktop, dark-theme, and 390-pixel-wide reader screenshots were captured and visually inspected. Narrow mathematical content was checked separately. Reading stays within the viewport; long expressions, code, diagrams, and tables have local overflow areas. The in-app browser was also used to inspect and operate the local reader.
 
-Folder scenarios cover empty initial folders, icon creation/editing/reload, nested folder icon backup/restore, the 390-pixel icon picker, existing folder reparenting, image backup/restore, and offline initialization. Desktop and mobile picker screenshots are saved in `docs/screenshots/`. The earlier in-app preview confirmed that existing starter folders were removed while all six notes remained.
+Folder scenarios cover empty initial folders, icon creation/editing/reload, nested folder icon backup/restore, the 390-pixel icon picker, existing folder reparenting, image backup/restore, and offline initialization. Desktop and mobile picker screenshots are saved in `docs/screenshots/`.
+
+Onboarding scenarios verify the one-guide library, removed decorative text, the direct import-to-generation action, two clear import choices, English/Polish authored content, unchanged personal imports, permanent guide deletion, and several interactive question types with preserved carousel answers. Twenty initialization tests cover legacy sample cleanup, user records and assets, language changes, ownership, concurrent initialization, and transactional rollback.
 
 The UI and security review led to fixes for partial batch writes, unsafe replacement collisions, stale image attachments on paste replacement, excessive folder-restore work, decoded asset bounds, hidden semantic targets, hash-route interference, reading-position races, scroll overflow, and service-worker cache matching. The final local suite rechecked these behaviors against the current revision.
 
-## Deployment verification
+## Previous deployment verification
 
 [GitHub Actions run 38167646320](https://github.com/vende11s/LearnMD/actions/runs/38167646320) passed 261 unit tests, the production build, and all 33 browser tests (16 Chromium, 16 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
 

@@ -120,9 +120,11 @@ export function buildGenerationPrompt(style = 'balanced'): string {
   const selected =
     GENERATION_STYLES.find((entry) => entry.id === style) ??
     GENERATION_STYLES[0];
-  return `You are an expert educator writing a complete .learn.md document for LearnMD, a local-first interactive textbook reader. Use the source materials I provide after this prompt. Produce excellent, coherent educational notes that prioritize understanding, precision, and a calm reading experience.
+  return `You are an expert educator writing a complete .learn.md document for LearnMD, a local-first interactive textbook reader. Use the source materials or learning topic I provide after this prompt. Produce excellent, coherent educational notes that prioritize understanding, precision, and a calm reading experience.
 
 OUTPUT LANGUAGE: Write the notes in the language of the supplied materials unless the user explicitly requests a different language. This prompt is written in English only to describe the task and format; it does not require English notes.
+
+TOPIC-ONLY REQUESTS: If I provide a topic without source materials, teach it using established knowledge and clearly state the assumed audience and scope. Do not claim to have read materials I did not supply or invent citations. Follow the language of my topic request unless I specify otherwise.
 
 GENERATION STYLE: ${selected.label}. ${selected.description}
 

@@ -71,7 +71,7 @@ export function SettingsPage({
       const count = await restoreLibrary(await file.text());
       onToast(
         t(
-          `Restored ${count} notes as new copies.`,
+          `Restored ${count} ${count === 1 ? 'note' : 'notes'} as ${count === 1 ? 'a new copy' : 'new copies'}.`,
           `Przywrócono notatki jako nowe kopie: ${count}.`,
         ),
       );

@@ -12,7 +12,7 @@ type StoredFolder = {
 
 async function start(page: Page) {
   await page.goto('/');
-  await expect(page.locator('.note-card')).toHaveCount(6);
+  await expect(page.locator('.note-card')).toHaveCount(1);
 }
 
 async function openMobileNavigation(page: Page) {
@@ -82,7 +82,7 @@ async function readFolders(page: Page): Promise<StoredFolder[]> {
   );
 }
 
-test('a fresh library has six root-level examples and offers an empty custom-folder area', async ({
+test('a fresh library has one root-level guide and offers an empty custom-folder area', async ({
   page,
 }, testInfo) => {
   await start(page);
@@ -126,7 +126,7 @@ test('a fresh library has six root-level examples and offers an empty custom-fol
         };
       }),
   );
-  expect(noteFolders).toEqual(Array(6).fill(null));
+  expect(noteFolders).toEqual([null]);
 
   await emptyAction.click();
   const dialog = page.getByRole('dialog');
@@ -228,7 +228,7 @@ test('custom folder icons persist, can be changed, and survive nested backup res
     .locator('.settings-page input[type=file]')
     .setInputFiles(backupPath);
   await expect(
-    page.getByText('Restored 6 notes as new copies.', { exact: true }),
+    page.getByText('Restored 1 note as a new copy.', { exact: true }),
   ).toBeVisible();
   await expect(page.locator('.folder-row')).toHaveCount(4);
   await expect(

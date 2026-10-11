@@ -15,6 +15,7 @@ import type { Note, Folder } from '../storage';
 import { useStored } from '../hooks/useStored';
 import { useI18n } from '../i18n';
 import { FolderGlyph } from '../components/FolderIcon';
+import { GUIDE_ID } from '../content/guide';
 
 export function LibraryPage({
   notes,
@@ -65,10 +66,7 @@ export function LibraryPage({
           ? b.createdAt - a.createdAt
           : b.openedAt - a.openedAt,
     );
-  const featured =
-    notes.find((n) => n.id === 'calculus') ??
-    notes.find((n) => n.subject.toLowerCase().includes('calculus')) ??
-    notes[0];
+  const featured = notes.find((n) => n.id === GUIDE_ID) ?? notes[0];
   const home = route === 'library' && !query;
   const folderById = new Map(folders.map((folder) => [folder.id, folder]));
   const childFolders = folders.filter((folder) => folder.parentId === folderId);
@@ -76,9 +74,6 @@ export function LibraryPage({
     <div className="page library-page">
       <div className="page-heading">
         <div>
-          <div className="eyebrow">
-            {t('A SPACE FOR CURIOUS MINDS', 'PRZESTRZEŃ DLA CIEKAWYCH ŚWIATA')}
-          </div>
           <h1>
             {query
               ? t('Find a little clarity.', 'Znajdź to, co rozjaśnia myśli.')
@@ -151,7 +146,7 @@ export function LibraryPage({
               {t('Interactive notes', 'Interaktywne notatki')}
             </span>
           </div>
-          <div className="calculus-art" aria-hidden="true">
+          <div className="note-preview-art" aria-hidden="true">
             <svg viewBox="0 0 360 230">
               <defs>
                 <pattern
@@ -170,33 +165,80 @@ export function LibraryPage({
                 </pattern>
               </defs>
               <rect width="360" height="230" fill="url(#dot-grid)" />
-              <path d="M28 180H327 M65 205V28" className="axis" />
-              <path
-                d="M50 179 C105 180 140 165 180 132 S250 74 302 29"
-                className="curve"
+              <rect
+                x="89"
+                y="22"
+                width="206"
+                height="162"
+                rx="10"
+                fill="var(--warm)"
+                stroke="currentColor"
+                opacity=".3"
               />
-              <path d="M107 192L285 43" className="tangent" />
-              <path d="M188 179V125H65" className="guideline" />
-              <circle cx="188" cy="125" r="6" className="point" />
-              <text x="285" y="115" className="math-label">
-                f′(x)
-              </text>
-              <text x="316" y="201" className="axis-label">
-                x
-              </text>
-              <text x="42" y="32" className="axis-label">
-                y
-              </text>
-              <text x="102" y="56" className="small-math">
-                {t('a new way to see change', 'nowe spojrzenie na zmianę')}
-              </text>
+              <rect
+                x="65"
+                y="40"
+                width="206"
+                height="162"
+                rx="10"
+                fill="var(--warm)"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M87 65h114M87 79h153M87 89h135"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                opacity=".35"
+              />
+              <rect
+                x="84"
+                y="110"
+                width="168"
+                height="28"
+                rx="5"
+                fill="currentColor"
+                opacity=".09"
+              />
+              <circle
+                cx="99"
+                cy="124"
+                r="6"
+                fill="none"
+                stroke="currentColor"
+              />
+              <path
+                d="m96 124 2 2 4-5M115 124h107"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="99"
+                cy="154"
+                r="6"
+                fill="none"
+                stroke="currentColor"
+                opacity=".4"
+              />
+              <path
+                d="M115 154h91M90 184h84"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                opacity=".25"
+              />
+              <path
+                d="m229 179 5 5-5 5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
-            <span className="art-caption">
-              {t(
-                'SMALL STEPS. BEAUTIFUL CONNECTIONS.',
-                'MAŁE KROKI. WAŻNE POWIĄZANIA.',
-              )}
-            </span>
           </div>
         </section>
       )}
@@ -379,13 +421,6 @@ export function LibraryPage({
           </button>
         </footer>
       )}
-      <div className="page-footnote">
-        <span className="status-dot" />
-        {t(
-          'Stored on this device. A quiet place to think.',
-          'Zapisane na tym urządzeniu. Spokojne miejsce do myślenia.',
-        )}
-      </div>
     </div>
   );
 }

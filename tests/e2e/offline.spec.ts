@@ -9,7 +9,7 @@ test('a project-path production build reopens notes, bundled assets, and guides 
   await expect(
     page.getByRole('heading', {
       level: 2,
-      name: 'The art of understanding change',
+      name: 'Your first steps with LearnMD',
       exact: true,
     }),
   ).toBeVisible();
@@ -107,7 +107,7 @@ test('a project-path production build reopens notes, bundled assets, and guides 
     .getByRole('navigation', { name: 'Main navigation' })
     .getByRole('button', { name: /All notes/ })
     .click();
-  await expect(page.locator('.note-card')).toHaveCount(8);
+  await expect(page.locator('.note-card')).toHaveCount(3);
   await page.getByRole('button', { name: /Component guide/ }).click();
   await expect(page.locator('.component-index button')).toHaveCount(65);
   await page

@@ -353,6 +353,7 @@ kbd {
   padding: 18px 5px;
   color: var(--soft);
   font-size: 10px;
+  line-height: 1.5;
 }
 .local-message small {
   display: block;
@@ -449,15 +450,6 @@ kbd {
   align-items: center;
   gap: 5px;
   margin-left: 12px;
-}
-.local-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 8px;
-  letter-spacing: 1px;
-  white-space: nowrap;
 }
 .workspace {
   flex: 1;
@@ -558,7 +550,7 @@ kbd {
 .featured-meta > span {
   color: var(--muted);
 }
-.calculus-art {
+.note-preview-art {
   width: 43%;
   max-width: 350px;
   align-self: stretch;
@@ -569,59 +561,9 @@ kbd {
   padding: 0 0 0 14px;
   color: var(--accent);
 }
-.calculus-art svg {
+.note-preview-art svg {
   width: 100%;
   height: auto;
-}
-.axis {
-  fill: none;
-  stroke: currentColor;
-  opacity: 0.3;
-  stroke-width: 1;
-}
-.curve {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.4;
-}
-.tangent {
-  fill: none;
-  stroke: #b6966b;
-  stroke-width: 1.5;
-}
-.guideline {
-  fill: none;
-  stroke: currentColor;
-  stroke-dasharray: 3 5;
-  opacity: 0.25;
-}
-.point {
-  fill: var(--accent);
-  stroke: var(--warm);
-  stroke-width: 3;
-}
-.math-label {
-  font-family: 'Lora', serif;
-  font-style: italic;
-  font-size: 26px;
-}
-.axis-label {
-  font-family: 'Lora', serif;
-  font-style: italic;
-  font-size: 12px;
-  fill: var(--soft);
-}
-.small-math {
-  font-family: 'Lora', serif;
-  font-style: italic;
-  font-size: 12px;
-  fill: var(--muted);
-}
-.art-caption {
-  font-size: 6px;
-  letter-spacing: 1.5px;
-  margin: 9px 0 0 15px;
-  color: var(--muted);
 }
 .library-toolbar {
   display: flex;
@@ -878,21 +820,6 @@ kbd {
   font-size: 10px;
   white-space: nowrap;
   color: var(--accent);
-}
-.page-footnote {
-  text-align: center;
-  font-size: 8px;
-  letter-spacing: 0.2px;
-  color: var(--muted);
-  margin-top: 31px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-}
-.page-footnote .status-dot {
-  width: 4px;
-  height: 4px;
 }
 .is-favorite {
   color: #ab9460 !important;
@@ -1687,7 +1614,7 @@ kbd {
     font-size: 13px;
     max-width: 380px;
   }
-  .calculus-art {
+  .note-preview-art {
     max-width: 420px;
   }
   .page h1 {
@@ -1788,7 +1715,7 @@ kbd {
   .featured-note p {
     font-size: 10px;
   }
-  .calculus-art {
+  .note-preview-art {
     width: 39%;
   }
   .library-tip {
@@ -1875,10 +1802,6 @@ kbd {
   .breadcrumb-root {
     display: none;
   }
-  .local-badge {
-    font-size: 7px;
-    letter-spacing: 0.5px;
-  }
   .page {
     padding: 30px 24px 25px;
   }
@@ -1905,7 +1828,7 @@ kbd {
   .featured-meta {
     font-size: 8px;
   }
-  .calculus-art {
+  .note-preview-art {
     width: 40%;
   }
   .note-card {
@@ -2035,7 +1958,7 @@ kbd {
     max-width: 230px;
     padding-right: 25px;
   }
-  .calculus-art {
+  .note-preview-art {
     position: absolute;
     right: -65px;
     top: 60px;
@@ -2202,9 +2125,6 @@ kbd {
   }
   .topbar-actions .icon-button {
     width: 28px;
-  }
-  .topbar .local-badge {
-    font-size: 6px;
   }
   .breadcrumbs > span:last-child {
     max-width: 180px;
@@ -2432,9 +2352,6 @@ body,
 }
 .diagnostic-fallback .learn-reader {
   font-size: 14px;
-}
-.page-footnote {
-  font-size: 9px;
 }
 
 .sidebar {

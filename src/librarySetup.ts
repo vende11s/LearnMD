@@ -1,8 +1,36 @@
-import { SAMPLES } from './content/samples';
-import { db, importNote, type Folder, type LibraryDB } from './storage';
+import {
+  getGuide,
+  GUIDE_ID,
+  LEGACY_SAMPLE_IDS,
+  type GuideLanguage,
+} from './content/guide';
+import { parseLearnMD } from './format/parser';
+import {
+  db,
+  extractSource,
+  importNote,
+  type Folder,
+  type LibraryDB,
+  type Note,
+} from './storage';
 
 export const STARTER_FOLDER_MIGRATION_KEY =
   'migration:remove-starter-folders:v1';
+export const GUIDE_MIGRATION_KEY = 'migration:single-guide:v1';
+export const GUIDE_OWNERSHIP_KEY = 'builtin:guide:ownership:v1';
+
+// User organization and reading state do not change ownership. Content edits,
+// renamed notes, imported replacements, and newly created records do.
+function ownershipSnapshot(note: Note): string {
+  return JSON.stringify([
+    note.source,
+    note.title,
+    note.description,
+    note.subject,
+    note.tags,
+    note.createdAt,
+  ]);
+}
 
 const originalStarterNames: Record<string, string> = {
   'sample-folder-0': 'Mathematics',
@@ -11,9 +39,10 @@ const originalStarterNames: Record<string, string> = {
   'sample-folder-3': 'Humanities',
 };
 
-/** Initialize example notes at root and retire untouched legacy starter folders. */
+/** Seed one removable guide and localize only the untouched built-in record. */
 export async function initializeLibrary(
   database: LibraryDB = db,
+  language: GuideLanguage = 'en',
 ): Promise<void> {
   await database.transaction(
     'rw',
@@ -78,19 +107,71 @@ export async function initializeLibrary(
           value: 'true',
         });
       }
-      if (!(await database.settings.get('initialized'))) {
-        for (const sample of SAMPLES) {
-          // A user record with the same ID must never be overwritten during setup.
-          if (await database.notes.get(sample.id)) continue;
-          await importNote(
-            sample.source,
+      if (!(await database.settings.get(GUIDE_MIGRATION_KEY))) {
+        for (const id of LEGACY_SAMPLE_IDS) {
+          const legacy = await database.notes.get(id);
+          // Restored backups and imported replacements belong to the user.
+          if (legacy?.sample !== true) continue;
+          await database.assets.where('noteId').equals(id).delete();
+          await database.notes.delete(id);
+        }
+        // A colliding user record must never be overwritten or adopted.
+        if (!(await database.notes.get(GUIDE_ID))) {
+          const guide = await importNote(
+            getGuide(language).source,
             null,
-            { sample: true, id: sample.id },
+            { sample: true, id: GUIDE_ID },
             database,
           );
+          await database.settings.put({
+            key: GUIDE_OWNERSHIP_KEY,
+            value: ownershipSnapshot(guide),
+          });
+        } else {
+          await database.settings.delete(GUIDE_OWNERSHIP_KEY);
         }
         await database.settings.put({ key: 'initialized', value: 'true' });
+        await database.settings.put({
+          key: GUIDE_MIGRATION_KEY,
+          value: 'true',
+        });
+        return;
       }
+
+      const ownership = await database.settings.get(GUIDE_OWNERSHIP_KEY);
+      if (!ownership) return;
+      const guide = await database.notes.get(GUIDE_ID);
+      if (
+        !guide ||
+        guide.sample !== true ||
+        ownershipSnapshot(guide) !== ownership.value
+      ) {
+        // Deletion or customization permanently ends automatic updates.
+        await database.settings.delete(GUIDE_OWNERSHIP_KEY);
+        return;
+      }
+
+      const source = extractSource(getGuide(language).source);
+      if (source === guide.source) return;
+      const parsed = parseLearnMD(source);
+      if (
+        parsed.diagnostics.some((diagnostic) => diagnostic.severity === 'error')
+      )
+        throw new Error('The built-in LearnMD guide contains invalid source.');
+      const updated: Note = {
+        ...guide,
+        source,
+        title: parsed.metadata.title,
+        description: parsed.metadata.description ?? '',
+        subject: parsed.metadata.subject ?? 'Personal notes',
+        tags: parsed.metadata.tags,
+        updatedAt: Date.now(),
+      };
+      await database.notes.put(updated);
+      await database.settings.put({
+        key: GUIDE_OWNERSHIP_KEY,
+        value: ownershipSnapshot(updated),
+      });
     },
   );
 }

@@ -7,8 +7,10 @@ import {
   AlertCircle,
   FolderOpen,
   ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 import { Modal } from './Modal';
+import './import-dialog.css';
 import { parseLearnMD } from '../format/parser';
 import { useI18n } from '../i18n';
 import {
@@ -27,12 +29,14 @@ export function ImportDialog({
   initialFolder,
   onClose,
   onImported,
+  onGenerate,
 }: {
   notes: Note[];
   folders: Folder[];
   initialFolder: string | null;
   onClose: () => void;
   onImported: (id: string) => void;
+  onGenerate: () => void;
 }) {
   const { t } = useI18n();
   const [tab, setTab] = useState<'paste' | 'file'>('paste');
@@ -46,7 +50,7 @@ export function ImportDialog({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState(false);
-  const [mode, setMode] = useState('');
+  const [mode, setMode] = useState<'' | 'new' | 'replace'>('');
   const [replaceId, setReplaceId] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const dirInput = useRef<HTMLInputElement>(null);
@@ -61,6 +65,8 @@ export function ImportDialog({
   const duplicates = parsed
     ? notes.filter((n) => n.title === parsed.metadata.title)
     : [];
+  // A duplicate title requires an explicit choice for the current source.
+  const importMode = mode || (duplicates.length ? '' : 'new');
   async function readFiles(list: FileList | File[]) {
     setError('');
     const all = Array.from(list);
@@ -130,7 +136,24 @@ export function ImportDialog({
       : fileResults.some((f) =>
           f.parsed.diagnostics.some((d) => d.severity === 'error'),
         );
+  const canImport =
+    !busy &&
+    (tab === 'paste'
+      ? !!source.trim() &&
+        validation === source &&
+        !!parsed &&
+        !bad &&
+        !!importMode &&
+        (importMode !== 'replace' ||
+          notes.some((note) => note.id === replaceId))
+      : fileResults.some(
+          (file) =>
+            !file.parsed.diagnostics.some(
+              (diagnostic) => diagnostic.severity === 'error',
+            ),
+        ));
   async function submit() {
+    if (!canImport) return;
     setBusy(true);
     setError('');
     try {
@@ -166,7 +189,9 @@ export function ImportDialog({
             }));
           const note = await importNote(item.source, folder || null, {
             replaceId:
-              tab === 'paste' && mode === 'replace' ? replaceId : undefined,
+              tab === 'paste' && importMode === 'replace'
+                ? replaceId
+                : undefined,
             ...(bundled.length ? { assets: bundled } : {}),
           });
           first ||= note.id;
@@ -195,12 +220,24 @@ export function ImportDialog({
       onClose={onClose}
       wide
     >
-      <p className="muted modal-intro">
-        {t(
-          'Import notes from anywhere. Make understanding your own.',
-          'Importuj notatki z dowolnego źródła. Ucz się po swojemu.',
-        )}
-      </p>
+      <div className="import-introduction">
+        <p className="muted modal-intro">
+          {t(
+            'Import notes from anywhere.',
+            'Importuj notatki z dowolnego źródła.',
+          )}
+        </p>
+        <button
+          type="button"
+          className="button import-generate"
+          onClick={onGenerate}
+          disabled={busy}
+        >
+          <Sparkles size={15} aria-hidden="true" />
+          {t('Generate notes', 'Generuj notatki')}
+          <ArrowRight size={14} aria-hidden="true" />
+        </button>
+      </div>
       <div className="segmented import-tabs">
         <button
           className={tab === 'paste' ? 'selected' : ''}
@@ -237,6 +274,7 @@ export function ImportDialog({
             onChange={(e) => {
               setSource(e.target.value);
               setMode('');
+              setReplaceId('');
             }}
             placeholder={t(
               '---\ntitle: Your next big idea\nversion: "1"\n---\n\n# Start with a little curiosity\n\nPaste your complete .learn.md document here…',
@@ -368,8 +406,8 @@ export function ImportDialog({
           {files.length > 0 && (
             <p className="fineprint">
               {t(
-                'Valid files are imported together as new copies; files with errors are skipped. To replace a note, use Paste source and choose Replace. Relative image paths resolve inside each document’s folder.',
-                'Poprawne pliki są importowane razem jako nowe kopie; pliki z błędami są pomijane. Aby zastąpić notatkę, wybierz Wklej źródło, a następnie Zastąp. Względne ścieżki obrazów odnoszą się do folderu dokumentu.',
+                'Valid files are imported together as new notes; files with errors are skipped. To replace a note, use Paste source and choose Replace existing note. Relative image paths resolve inside each document’s folder.',
+                'Poprawne pliki są importowane razem jako nowe notatki; pliki z błędami są pomijane. Aby zastąpić notatkę, wybierz Wklej źródło, a następnie Zastąp istniejącą notatkę. Względne ścieżki obrazów odnoszą się do folderu dokumentu.',
               )}
             </p>
           )}
@@ -391,40 +429,35 @@ export function ImportDialog({
           <label>
             {t('Import as', 'Importuj jako')}
             <select
-              value={mode}
+              value={importMode}
               onChange={(e) => {
-                setMode(e.target.value);
-                if (e.target.value === 'replace')
-                  setReplaceId(duplicates[0]?.id ?? notes[0]?.id ?? '');
+                setMode(e.target.value as 'new' | 'replace');
+                setReplaceId('');
               }}
             >
-              <option value="">
-                {duplicates.length
-                  ? t(
-                      'Choose how to handle existing title',
-                      'Wybierz sposób obsługi istniejącego tytułu',
-                    )
-                  : t('A new local copy', 'Nowa lokalna kopia')}
-              </option>
-              <option value="new">
-                {t('Create a new copy', 'Utwórz nową kopię')}
-              </option>
-              {notes.length > 0 && (
-                <option value="replace">
-                  {t('Replace an existing note…', 'Zastąp istniejącą notatkę…')}
+              {duplicates.length > 0 && (
+                <option value="" disabled>
+                  {t('Choose an import action', 'Wybierz sposób importu')}
                 </option>
               )}
+              <option value="new">{t('New note', 'Nowa notatka')}</option>
+              <option value="replace" disabled={!notes.length}>
+                {t('Replace existing note…', 'Zastąp istniejącą notatkę…')}
+              </option>
             </select>
           </label>
         )}
       </div>
-      {tab === 'paste' && mode === 'replace' && (
+      {tab === 'paste' && importMode === 'replace' && (
         <label className="field-label">
-          {t('Replace this local copy', 'Zastąp tę lokalną kopię')}
+          {t('Note to replace', 'Notatka do zastąpienia')}
           <select
             value={replaceId}
             onChange={(e) => setReplaceId(e.target.value)}
           >
+            <option value="" disabled>
+              {t('Choose a note…', 'Wybierz notatkę…')}
+            </option>
             {notes.map((n) => (
               <option key={n.id} value={n.id}>
                 {n.title}
@@ -433,8 +466,8 @@ export function ImportDialog({
           </select>
           <span>
             {t(
-              'This replaces its source while preserving its favorite status. Export the old copy first if you need it.',
-              'Zastępuje treść, zachowując oznaczenie jako ulubiona. W razie potrzeby najpierw wyeksportuj starą kopię.',
+              'Replaces the note’s content and keeps its favorite status.',
+              'Zastępuje treść notatki i zachowuje oznaczenie jako ulubiona.',
             )}
           </span>
         </label>
@@ -454,24 +487,12 @@ export function ImportDialog({
         </span>
         <button
           className="button primary"
-          disabled={
-            busy ||
-            (tab === 'paste' && !!bad) ||
-            (tab === 'paste'
-              ? !source.trim() ||
-                validation !== source ||
-                (!mode && duplicates.length > 0) ||
-                (mode === 'replace' && !replaceId)
-              : !fileResults.some(
-                  (f) =>
-                    !f.parsed.diagnostics.some((d) => d.severity === 'error'),
-                ))
-          }
+          disabled={!canImport}
           onClick={() => void submit()}
         >
           {busy
             ? t('Saving…', 'Zapisywanie…')
-            : tab === 'paste' && mode === 'replace'
+            : tab === 'paste' && importMode === 'replace'
               ? t('Replace & open', 'Zastąp i otwórz')
               : t('Import & open', 'Importuj i otwórz')}
           <ArrowRight size={16} />

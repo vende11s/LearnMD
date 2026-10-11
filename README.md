@@ -30,17 +30,19 @@ Each browser and origin has its own local library. To move notes from a local de
 
 ## Use
 
-- **Generate notes:** copy the complete format and teaching prompt into any LLM, along with your materials. LearnMD itself sends no AI requests.
+- **Generate notes:** copy the complete format and teaching prompt into ChatGPT, Claude, Gemini, or another LLM, along with slides, PDFs, exercise sets, notes, or a topic you want to learn. The import dialog links directly to this screen. LearnMD itself sends no AI requests.
 - **Add note:** paste source or import `.learn.md` / `.md` files. An unambiguous enclosing Markdown fence is removed automatically. Inspect validation messages before importing.
 - **Reader:** navigate a chapter, reveal proofs and derivations, and explore diagrams. Sections display their complete authored text; layered explanations use manually selected tabs. Reading position is saved. Responses, scratchpad work, and component interaction state are temporary; source remains read-only.
 - **Ask your LLM:** use **Copy source** above a document to copy its full LearnMD source. Selecting text reveals a floating source button that copies the original selected blocks, including Markdown, formulas, and complete component fences. Paste this context into your preferred LLM and ask follow-up questions.
 - **Long quizzes and mixed content:** a `carousel` presents any number of `slide` blocks within the document limits. Slides accept ordinary prose and nested components. Navigation preserves answers and scratchpad content while the document remains open; printing includes every slide.
 - **Language:** Settings offers English and Polish. The initial interface language follows the browser/system preference, with English as fallback; an explicit selection is saved on the device. The generation prompt stays in English and requests notes in the language of the supplied materials unless instructed otherwise.
 - **Library:** search titles and content, mark favorites, sort, and organize your own nested folders. Folders start empty; create them yourself and choose one of 16 icons, editable later. Metadata dialogs rename/move local copies. Hover or focus a note to reveal its trash action; deletion requires confirmation. Deleting a folder moves its contents into its parent. Folder icons are included in library backups.
-- **Updates:** revise a source file externally. Paste its revised contents and explicitly choose **Replace an existing note** or **Create a new copy**. Replacement keeps favorites, resets reading position, and retains existing bundled assets unless new assets are supplied. File imports always create new copies.
+- **Updates:** revise a source file externally. Paste its revised contents and choose **New note** or **Replace existing note**. Replacement requires selecting the target note, keeps favorites, resets reading position, and retains existing bundled assets unless new assets are supplied. A duplicate title requires an explicit import choice. File imports always create new notes.
 - **Backup:** Settings → Export library creates a portable JSON backup containing notes, folders, favorites, and image assets. Restore validates the entire backup and adds new copies atomically, preserving existing data. An individual source export does not include image assets.
 
-The library initializes with six substantial chapters at the library root: calculus, linear algebra, algorithms, networks, physics, and history. These are ordinary, removable library copies, not special renderer paths. No folders are created automatically. A one-time upgrade removes unchanged legacy starter folders while preserving their notes and moving user subfolders to the nearest retained parent. Renamed or customized folders are kept.
+The library initializes with one root-level guide: **Your first steps with LearnMD** / **Pierwsze kroki z LearnMD**. It explains the workflow and demonstrates interactive components, including a carousel with different question types. Its authored text follows the selected interface language while it remains an unmodified built-in note. It can be organized or deleted normally; deleting it permanently opts out of automatic initialization, including after changing language. Imported or replaced notes are never translated automatically.
+
+No folders are created automatically. A one-time upgrade removes the six legacy built-in chapters while preserving imported replacements, personal notes, and user folders. The earlier starter-folder migration also preserves renamed or customized folders and reparents their contents safely.
 
 ## Format and components
 
@@ -106,7 +108,7 @@ npm run test:e2e -- --project=firefox
 
 Tests cover parser/nesting/schema errors, all component examples, state transitions, manual tabs, cross-references, security, persistence, file/paste import, explicit replacement, folder operations, and backup validation. Browser tests exercise complete workflows and capture desktop, dark, and narrow-screen screenshots in `test-results/`. The Playwright HTML report is in `playwright-report/`.
 
-The implementation uses standard browser APIs and does not depend on the File System Access API. On this development machine, the downloaded Playwright Firefox executable cannot launch because Windows reports a missing `mozglue` side-by-side assembly. Firefox verification therefore remains an environment limitation; its project is configured for a machine with a working runtime.
+The implementation uses standard browser APIs and does not depend on the File System Access API. On this development machine, the downloaded Playwright Firefox executable cannot launch because Windows reports a missing `mozglue` side-by-side assembly. GitHub Actions runs the Firefox suite on Ubuntu alongside Chromium and the production offline checks.
 
 ## Project map
 
@@ -116,7 +118,7 @@ The implementation uses standard browser APIs and does not depend on the File Sy
 - `src/components/` — accessible dialogs and import workflow.
 - `src/App.tsx` — application shell, navigation, and initialization.
 - `src/pages/` — library, document reader, component guide, and preferences.
-- `src/content/` — six real sample chapters with parser/math integration tests.
+- `src/content/` — English and Polish versions of the removable getting-started guide, with parser/math integration tests.
 - `tests/e2e/` — repeatable browser workflows.
 - `scripts/offline.ts` — production static-asset service worker generation.
 
