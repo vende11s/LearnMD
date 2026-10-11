@@ -140,7 +140,7 @@ $$
 As $h\to0$, the first factor tends to zero and the second tends to the finite number $f'(a)$. Their product tends to zero. Thus $f(a+h)\to f(a)$, which is continuity at $a$.
 :::
 
-:::detail-level{level="detailed" title="A subtle distinction"}
+:::section{title="A subtle distinction"}
 A vertical tangent may look geometrically well defined, but an infinite difference-quotient limit is not a finite derivative under our definition. For example, $f(x)=\sqrt[3]{x}$ is continuous at zero and its graph has a vertical tangent there, while $f'(0)$ does not exist as a finite real number. Always distinguish the visual idea of a tangent from the precise definition being used.
 :::
 

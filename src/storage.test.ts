@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { FOLDER_ICON_IDS, normalizeFolderIcon } from './folderIcons';
 import {
   deleteFolder,
   deleteNote,
@@ -217,8 +218,52 @@ describe('portable backup recovery', () => {
     expect(restored.folderId).not.toBe('nested');
     const nested = await database.folders.get(restored.folderId!);
     expect(nested?.name).toBe('Nested');
+    expect(nested?.icon).toBeUndefined();
+    expect(normalizeFolderIcon(nested?.icon)).toBe('folder');
     expect((await database.folders.get(nested!.parentId!))?.name).toBe('Root');
   });
+
+  it('preserves all supported folder icons through export and restore', async () => {
+    await database.folders.bulkAdd(
+      FOLDER_ICON_IDS.map((icon) => ({
+        id: icon,
+        name: `My ${icon}`,
+        parentId: null,
+        icon,
+      })),
+    );
+    const backup = await exportLibrary(database);
+    expect(await restoreLibrary(backup, database)).toBe(0);
+    const restored = (await database.folders.toArray()).filter(
+      (folder) =>
+        !FOLDER_ICON_IDS.includes(
+          folder.id as (typeof FOLDER_ICON_IDS)[number],
+        ),
+    );
+    expect(restored).toHaveLength(FOLDER_ICON_IDS.length);
+    for (const icon of FOLDER_ICON_IDS) {
+      expect(
+        restored.find((folder) => folder.name === `My ${icon}`)?.icon,
+      ).toBe(icon);
+    }
+  });
+
+  it.each(['unsupported-symbol', null, 123, { name: 'book' }])(
+    'rejects the explicit unsupported backup icon %j without changing existing records',
+    async (icon) => {
+      const original = await importNote(source(), null, {}, database);
+      const backup = JSON.parse(await exportLibrary(database));
+      backup.folders = [
+        { id: 'new-folder', name: 'New folder', parentId: null, icon },
+      ];
+      await expect(
+        restoreLibrary(JSON.stringify(backup), database),
+      ).rejects.toThrow('unsupported folder icon');
+      expect(await database.folders.count()).toBe(0);
+      expect(await database.notes.toArray()).toEqual([original]);
+      expect(normalizeFolderIcon(icon)).toBe('folder');
+    },
+  );
 
   it('rejects folder cycles and leaves the library unchanged', async () => {
     const original = await importNote(source(), null, {}, database);

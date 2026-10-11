@@ -1,3 +1,5 @@
+import { sourceProps } from './source';
+import { useI18n } from '../i18n';
 import { useId, useMemo, useState } from 'react';
 import { ArrowRight, ImageOff, RotateCcw } from 'lucide-react';
 import type { LearnNode } from '../format/types';
@@ -62,6 +64,7 @@ function positions(
 }
 
 export function NetworkDiagram({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const nodes = named(node, ['node']).slice(0, 60);
   const edges = named(node, ['edge']).slice(0, 150);
@@ -160,6 +163,7 @@ export function NetworkDiagram({ node }: { node: LearnNode }) {
                 <g
                   key={index}
                   id={elementId(edge)}
+                  {...sourceProps(edge, 'structural')}
                   className={activeEdge ? 'is-active' : ''}
                 >
                   <line
@@ -196,7 +200,11 @@ export function NetworkDiagram({ node }: { node: LearnNode }) {
               onClick={() => select(index)}
             >
               <span>{attr(item, 'label', attr(item, 'id'))}</span>
-              {kind === 'architecture' && <small>Component {index + 1}</small>}
+              {kind === 'architecture' && (
+                <small>
+                  {t(`Component ${index + 1}`, `Komponent ${index + 1}`)}
+                </small>
+              )}
             </button>
           ))}
         </div>
@@ -210,8 +218,10 @@ export function NetworkDiagram({ node }: { node: LearnNode }) {
           {nodes.map((item, index) => (
             <div key={index} hidden={selected !== index}>
               <span className="learn-eyebrow">
-                {kind === 'state-machine' ? 'Current state' : 'Selected'} ·{' '}
-                {attr(item, 'label')}
+                {kind === 'state-machine'
+                  ? t('Current state', 'Bieżący stan')
+                  : t('Selected', 'Wybrano')}{' '}
+                · {attr(item, 'label')}
               </span>
               {attr(item, 'description') && <p>{attr(item, 'description')}</p>}
               {render(item.children)}
@@ -229,15 +239,15 @@ export function NetworkDiagram({ node }: { node: LearnNode }) {
                       type="button"
                       key={index}
                       className="learn-text-button"
-                      aria-label={`${attr(edge, 'label', 'Connected to')} ${attr(nodes[target], 'label')}`}
+                      aria-label={`${attr(edge, 'label', t('Connected to', 'Połączenie z'))} ${attr(nodes[target], 'label')}`}
                       onClick={() => select(target)}
                     >
                       {attr(
                         edge,
                         'label',
                         kind === 'state-machine'
-                          ? 'Transition'
-                          : 'Connected to',
+                          ? t('Transition', 'Przejście')
+                          : t('Connected to', 'Połączenie z'),
                       )}
                       <ArrowRight size={13} aria-hidden="true" />
                       {attr(nodes[target], 'label')}
@@ -253,7 +263,8 @@ export function NetworkDiagram({ node }: { node: LearnNode }) {
               className="learn-text-button print-hide"
               onClick={() => select(initial)}
             >
-              <RotateCcw size={13} /> Reset state
+              <RotateCcw size={13} />{' '}
+              {t('Reset state', 'Przywróć stan początkowy')}{' '}
             </button>
           )}
         </figcaption>
@@ -270,6 +281,7 @@ export function NetworkDiagram({ node }: { node: LearnNode }) {
 }
 
 export function Sequence({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const participants = named(node, ['participant']).slice(0, 12);
   const messages = named(node, ['message']).slice(0, 100);
@@ -289,7 +301,10 @@ export function Sequence({ node }: { node: LearnNode }) {
           role="img"
           aria-label={titleOf(
             node,
-            'Sequence of messages; select a message below to explore it.',
+            t(
+              'Sequence of messages; select a message below to explore it.',
+              'Sekwencja komunikatów; wybierz komunikat poniżej, aby poznać szczegóły.',
+            ),
           )}
           style={{ width, maxWidth: 'none' }}
         >
@@ -367,7 +382,7 @@ export function Sequence({ node }: { node: LearnNode }) {
       </div>
       <div
         className="learn-message-controls print-hide"
-        aria-label="Sequence messages"
+        aria-label={t('Sequence messages', 'Komunikaty sekwencji')}
       >
         {messages.map((message, index) => (
           <button
@@ -386,6 +401,7 @@ export function Sequence({ node }: { node: LearnNode }) {
           <div
             key={index}
             id={elementId(message, `${id}-message-${index}`)}
+            {...sourceProps(message, 'structural')}
             hidden={selected !== index}
           >
             <span className="learn-eyebrow">
@@ -401,6 +417,7 @@ export function Sequence({ node }: { node: LearnNode }) {
 }
 
 export function Timeline({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const events = named(node, ['event']);
   return (
@@ -409,10 +426,19 @@ export function Timeline({ node }: { node: LearnNode }) {
       {render(rest(node, ['event']))}
       <ol>
         {events.map((event, index) => (
-          <li key={index} id={elementId(event)}>
+          <li
+            key={index}
+            id={elementId(event)}
+            {...sourceProps(event, 'structural')}
+          >
             <div className="learn-timeline-date">{attr(event, 'date')}</div>
             <div>
-              <h5>{titleOf(event, `Event ${index + 1}`)}</h5>
+              <h5>
+                {titleOf(
+                  event,
+                  t(`Event ${index + 1}`, `Wydarzenie ${index + 1}`),
+                )}
+              </h5>
               {render(event.children)}
             </div>
           </li>
@@ -423,11 +449,12 @@ export function Timeline({ node }: { node: LearnNode }) {
 }
 
 function TreeItem({ node, depth = 0 }: { node: LearnNode; depth?: number }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const items = named(node, ['item']);
-  const title = titleOf(node, 'Branch');
+  const title = titleOf(node, t('Branch', 'Gałąź'));
   return (
-    <li id={elementId(node)}>
+    <li id={elementId(node)} {...sourceProps(node, 'structural')}>
       {items.length ? (
         <details open={depth < 2}>
           <summary>{title}</summary>
@@ -465,6 +492,7 @@ export function Tree({ node }: { node: LearnNode }) {
 }
 
 export function Process({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const steps = named(node, ['step', 'item']);
   const [selected, select] = useSelection(node, steps.length);
@@ -483,7 +511,7 @@ export function Process({ node }: { node: LearnNode }) {
               onClick={() => select(index)}
             >
               <span>{index + 1}</span>
-              {titleOf(step, `Stage ${index + 1}`)}
+              {titleOf(step, t(`Stage ${index + 1}`, `Etap ${index + 1}`))}
             </button>
             {index < steps.length - 1 && (
               <ArrowRight size={16} aria-hidden="true" />
@@ -496,6 +524,7 @@ export function Process({ node }: { node: LearnNode }) {
           className="learn-process-detail"
           key={index}
           id={elementId(step, `${id}-${index}`)}
+          {...sourceProps(step, 'structural')}
           hidden={selected !== index}
         >
           {render(step.children)}
@@ -514,6 +543,7 @@ export function SafeImage({
   alt: string;
   children?: React.ReactNode;
 }) {
+  const { t } = useI18n();
   const { assets, allowRemote } = useReader();
   const [consent, setConsent] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -534,13 +564,22 @@ export function SafeImage({
     <div className="learn-image-unavailable">
       <ImageOff size={24} aria-hidden="true" />
       <div>
-        <strong>{alt || 'Document image'}</strong>
+        <strong>{alt || t('Document image', 'Ilustracja w dokumencie')}</strong>
         <p>
           {failed
-            ? 'This image could not be loaded.'
+            ? t(
+                'This image could not be loaded.',
+                'Nie udało się wczytać ilustracji.',
+              )
             : remote
-              ? 'This image is hosted externally.'
-              : 'Bundled image unavailable. Import its folder with the note.'}
+              ? t(
+                  'This image is hosted externally.',
+                  'Ta ilustracja znajduje się na zewnętrznym serwerze.',
+                )
+              : t(
+                  'Bundled image unavailable. Import its folder with the note.',
+                  'Brak dołączonej ilustracji. Zaimportuj jej folder razem z notatką.',
+                )}
         </p>
         {remote && !source && (
           <button
@@ -548,12 +587,12 @@ export function SafeImage({
             className="learn-text-button"
             onClick={() => setConsent(true)}
           >
-            Load image from{' '}
+            {t('Load image from', 'Wczytaj ilustrację z')}{' '}
             {(() => {
               try {
                 return new URL(src).hostname;
               } catch {
-                return 'external source';
+                return t('external source', 'zewnętrznego źródła');
               }
             })()}
           </button>
@@ -564,6 +603,7 @@ export function SafeImage({
 }
 
 export function ImageAnnotation({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const markers = named(node, ['annotation']);
   const [selected, select] = useSelection(node, markers.length);
@@ -582,7 +622,11 @@ export function ImageAnnotation({ node }: { node: LearnNode }) {
             }}
             key={index}
             type="button"
-            aria-label={attr(marker, 'label', `Annotation ${index + 1}`)}
+            aria-label={attr(
+              marker,
+              'label',
+              t(`Annotation ${index + 1}`, `Adnotacja ${index + 1}`),
+            )}
             aria-pressed={selected === index}
             aria-controls={elementId(marker, `${id}-${index}`)}
             onClick={() => select(index)}
@@ -608,6 +652,7 @@ export function ImageAnnotation({ node }: { node: LearnNode }) {
         <figcaption
           className="learn-diagram-description"
           id={elementId(marker, `${id}-${index}`)}
+          {...sourceProps(marker, 'structural')}
           key={index}
           hidden={selected !== index}
         >

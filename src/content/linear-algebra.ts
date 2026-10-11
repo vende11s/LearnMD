@@ -132,13 +132,13 @@ $$
 Along one diagonal, space stretches by a factor of $3$. Along the other, it remains unchanged. In a basis built from those directions, this transformation is simply diagonal scaling. Its determinant $3$ is the product of those two scale factors.
 
 ::::layers{title="Why eigenvectors are useful"}
-:::layer{title="Geometry" level="concise"}
+:::layer{title="Geometry"}
 Eigenvectors reveal the directions in which a transformation has the simplest possible behavior: multiplication by a scalar.
 :::
-:::layer{title="Repeated transformations" level="standard"}
+:::layer{title="Repeated transformations"}
 If $A\mathbf v=\lambda\mathbf v$, then $A^k\mathbf v=\lambda^k\mathbf v$. Repeated matrix multiplication becomes repeated scalar multiplication along that direction.
 :::
-:::layer{title="Changing coordinates" level="detailed"}
+:::layer{title="Changing coordinates"}
 When an $n\times n$ matrix has a basis of eigenvectors, place them in the columns of an invertible matrix $P$. Then $A=PDP^{-1}$, with eigenvalues on the diagonal of $D$, and $A^k=PD^kP^{-1}$. Not every matrix has enough independent eigenvectors for this construction.
 :::
 ::::

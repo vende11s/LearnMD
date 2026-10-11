@@ -8,16 +8,13 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { download, exportLibrary, restoreLibrary } from '../storage';
-import type { DetailLevel as Detail } from '../reader/context';
-import { DetailControl } from '../components/DetailControl';
+import { useI18n, type Language } from '../i18n';
 
 export function SettingsPage({
   theme,
   setTheme,
   remote,
   setRemote,
-  detail,
-  setDetail,
   onError,
   onToast,
   noteCount,
@@ -26,12 +23,11 @@ export function SettingsPage({
   setTheme: (v: 'light' | 'dark') => void;
   remote: boolean;
   setRemote: (v: boolean) => void;
-  detail: Detail;
-  setDetail: (d: Detail) => void;
   onError: (s: string) => void;
   onToast: (s: string) => void;
   noteCount: number;
 }) {
+  const { language, setLanguage, t } = useI18n();
   const restore = useRef<HTMLInputElement>(null);
   const [storage, setStorage] = useState<{ usage?: number; quota?: number }>(
     {},
@@ -55,7 +51,9 @@ export function SettingsPage({
         await exportLibrary(),
         `learnmd-library-${new Date().toISOString().slice(0, 10)}.json`,
       );
-      onToast('Library backup exported.');
+      onToast(
+        t('Library backup exported.', 'Wyeksportowano kopię biblioteki.'),
+      );
     } catch (e) {
       onError(String(e));
     } finally {
@@ -66,10 +64,17 @@ export function SettingsPage({
     if (!file) return;
     try {
       if (file.size > 100 * 1024 * 1024)
-        throw new Error('Backup exceeds 100 MB.');
+        throw new Error(
+          t('Backup exceeds 100 MB.', 'Kopia zapasowa przekracza 100 MB.'),
+        );
       setBusy(true);
       const count = await restoreLibrary(await file.text());
-      onToast(`Restored ${count} notes as new copies.`);
+      onToast(
+        t(
+          `Restored ${count} notes as new copies.`,
+          `Przywrócono notatki jako nowe kopie: ${count}.`,
+        ),
+      );
     } catch (e) {
       onError(String(e));
     } finally {
@@ -79,17 +84,46 @@ export function SettingsPage({
   }
   return (
     <div className="page settings-page">
-      <div className="eyebrow">MAKE YOURSELF AT HOME</div>
-      <h1>A space that feels like you.</h1>
+      <div className="eyebrow">{t('MAKE YOURSELF AT HOME', 'ROZGOŚĆ SIĘ')}</div>
+      <h1>
+        {t('A space that feels like you.', 'Przestrzeń na Twoich zasadach.')}
+      </h1>
       <p className="page-description">
-        A few thoughtful choices for your reading experience.
+        {t(
+          'A few thoughtful choices for your reading experience.',
+          'Kilka ustawień, dzięki którym czytanie będzie wygodniejsze.',
+        )}
       </p>
       <section className="settings-section">
-        <h2>Reading</h2>
         <div className="setting-row">
           <div>
-            <h3>Appearance</h3>
-            <p>A comfortable backdrop for every idea.</p>
+            <h3>{t('Interface language', 'Język interfejsu')}</h3>
+            <p>
+              {t(
+                'Starts with your browser language. Your choice is saved on this device.',
+                'Domyślnie zgodny z językiem przeglądarki. Twój wybór jest zapisywany na tym urządzeniu.',
+              )}
+            </p>
+          </div>
+          <select
+            className="language-select"
+            aria-label={t('Interface language', 'Język interfejsu')}
+            value={language}
+            onChange={(event) => setLanguage(event.target.value as Language)}
+          >
+            <option value="en">English</option>
+            <option value="pl">Polski</option>
+          </select>
+        </div>
+        <div className="setting-row">
+          <div>
+            <h3>{t('Appearance', 'Wygląd')}</h3>
+            <p>
+              {t(
+                'A comfortable backdrop for every idea.',
+                'Wygodne tło dla każdej myśli.',
+              )}
+            </p>
           </div>
           <div className="segmented">
             <button
@@ -97,66 +131,93 @@ export function SettingsPage({
               onClick={() => setTheme('light')}
             >
               <Sun size={15} />
-              Light
+              {t('Light', 'Jasny')}
             </button>
             <button
               className={theme === 'dark' ? 'selected' : ''}
               onClick={() => setTheme('dark')}
             >
               <Moon size={15} />
-              Dark
+              {t('Dark', 'Ciemny')}
             </button>
           </div>
         </div>
         <div className="setting-row">
           <div>
-            <h3>Default detail level</h3>
-            <p>Choose how much explanation to show.</p>
-          </div>
-          <DetailControl detail={detail} setDetail={setDetail} />
-        </div>
-        <div className="setting-row">
-          <div>
-            <h3>External images</h3>
+            <h3>{t('External images', 'Obrazy zewnętrzne')}</h3>
             <p>
-              Allow imported notes to load HTTPS images from other sites.
+              {t(
+                'Allow imported notes to load HTTPS images from other sites.',
+                'Zezwalaj notatkom na wczytywanie obrazów HTTPS z innych stron.',
+              )}
               <br />
-              This sends a request to the image host.
+              {t(
+                'This sends a request to the image host.',
+                'Powoduje to wysłanie zapytania do serwera obrazu.',
+              )}
             </p>
           </div>
           <input
             type="checkbox"
             className="switch"
-            aria-label="Allow external images"
+            aria-label={t(
+              'Allow external images',
+              'Zezwalaj na obrazy zewnętrzne',
+            )}
             checked={remote}
             onChange={(e) => setRemote(e.target.checked)}
           />
         </div>
       </section>
       <section className="settings-section">
-        <h2>Your local library</h2>
+        <h2>{t('Your local library', 'Twoja lokalna biblioteka')}</h2>
         <div className="storage-summary">
           <HardDrive size={25} />
           <div>
-            <strong>{noteCount} notes, entirely yours.</strong>
+            <strong>
+              {t(
+                `${noteCount} notes, entirely yours.`,
+                `Twoje notatki: ${noteCount}. Tylko Twoje.`,
+              )}
+            </strong>
             <p>
               {storage.usage !== undefined
-                ? `${(storage.usage / 1024 / 1024).toFixed(1)} MB used on this device`
-                : 'Stored in this browser using IndexedDB'}{' '}
+                ? t(
+                    `${(storage.usage / 1024 / 1024).toFixed(1)} MB used on this device`,
+                    `${(storage.usage / 1024 / 1024).toFixed(1)} MB zajęte na tym urządzeniu`,
+                  )
+                : t(
+                    'Stored in this browser using IndexedDB',
+                    'Zapisano w tej przeglądarce przy użyciu IndexedDB',
+                  )}{' '}
               ·{' '}
               {persistent
-                ? 'Persistent storage granted'
-                : 'Standard browser storage'}
+                ? t(
+                    'Persistent storage granted',
+                    'Przyznano trwałe przechowywanie',
+                  )
+                : t(
+                    'Standard browser storage',
+                    'Standardowa pamięć przeglądarki',
+                  )}
             </p>
           </div>
         </div>
         <div className="setting-row">
           <div>
-            <h3>Keep a portable backup</h3>
+            <h3>
+              {t('Keep a portable backup', 'Zachowaj przenośną kopię zapasową')}
+            </h3>
             <p>
-              Export all notes, folders, favorites, and bundled images.
+              {t(
+                'Export all notes, folders, favorites, and bundled images.',
+                'Eksportuj notatki, foldery, ulubione i dołączone obrazy.',
+              )}
               <br />
-              Browser data can be removed; keep a backup somewhere safe.
+              {t(
+                'Browser data can be removed; keep a backup somewhere safe.',
+                'Dane przeglądarki mogą zostać usunięte — przechowuj kopię w bezpiecznym miejscu.',
+              )}
             </p>
           </div>
           <button
@@ -165,16 +226,22 @@ export function SettingsPage({
             onClick={() => void backup()}
           >
             <ArrowDownToLine size={16} />
-            Export library
+            {t('Export library', 'Eksportuj bibliotekę')}
           </button>
         </div>
         <div className="setting-row">
           <div>
-            <h3>Restore a library</h3>
+            <h3>{t('Restore a library', 'Przywróć bibliotekę')}</h3>
             <p>
-              Import a LearnMD JSON backup as new copies.
+              {t(
+                'Import a LearnMD JSON backup as new copies.',
+                'Importuj kopię JSON LearnMD jako nowe egzemplarze notatek.',
+              )}
               <br />
-              Existing notes are preserved.
+              {t(
+                'Existing notes are preserved.',
+                'Istniejące notatki zostaną zachowane.',
+              )}
             </p>
           </div>
           <button
@@ -183,7 +250,7 @@ export function SettingsPage({
             onClick={() => restore.current?.click()}
           >
             <Upload size={16} />
-            Restore backup
+            {t('Restore backup', 'Przywróć kopię')}
           </button>
           <input
             ref={restore}
@@ -196,11 +263,22 @@ export function SettingsPage({
         {!persistent && (
           <div className="setting-row">
             <div>
-              <h3>Ask the browser to retain your notes</h3>
+              <h3>
+                {t(
+                  'Ask the browser to retain your notes',
+                  'Poproś przeglądarkę o zachowanie notatek',
+                )}
+              </h3>
               <p>
-                Persistent storage reduces automatic eviction.
+                {t(
+                  'Persistent storage reduces automatic eviction.',
+                  'Trwałe przechowywanie ogranicza automatyczne usuwanie danych.',
+                )}
                 <br />
-                Your browser decides whether to grant this request.
+                {t(
+                  'Your browser decides whether to grant this request.',
+                  'Przeglądarka decyduje, czy przyznać to uprawnienie.',
+                )}
               </p>
             </div>
             <button
@@ -212,14 +290,20 @@ export function SettingsPage({
                     setPersistent(ok);
                     onToast(
                       ok
-                        ? 'Persistent storage granted.'
-                        : 'Your browser has not granted persistent storage. Keep regular backups.',
+                        ? t(
+                            'Persistent storage granted.',
+                            'Przyznano trwałe przechowywanie.',
+                          )
+                        : t(
+                            'Your browser has not granted persistent storage. Keep regular backups.',
+                            'Przeglądarka nie przyznała trwałego przechowywania. Regularnie twórz kopie zapasowe.',
+                          ),
                     );
                   })
                   .catch((e) => onError(String(e)))
               }
             >
-              Request storage
+              {t('Request storage', 'Poproś o zachowanie danych')}
             </button>
           </div>
         )}
@@ -227,11 +311,17 @@ export function SettingsPage({
       <div className="privacy-note">
         <ShieldCheck size={22} />
         <div>
-          <h3>A local copy, a lasting idea.</h3>
+          <h3>
+            {t(
+              'A local copy, a lasting idea.',
+              'Lokalna kopia, trwała wiedza.',
+            )}
+          </h3>
           <p>
-            Imported documents are independent copies. Renaming, moving, or
-            deleting them here never changes the original files on your
-            computer. Note bodies are read-only; revise externally and reimport.
+            {t(
+              'Imported documents are independent copies. Renaming, moving, or deleting them here never changes the original files on your computer. Note bodies are read-only; revise externally and reimport.',
+              'Importowane dokumenty są niezależnymi kopiami. Zmiana nazwy, przeniesienie lub usunięcie ich tutaj nie zmienia plików źródłowych na komputerze. Treść notatek jest tylko do odczytu — popraw ją zewnętrznie i zaimportuj ponownie.',
+            )}
           </p>
         </div>
       </div>

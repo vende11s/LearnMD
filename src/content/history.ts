@@ -99,7 +99,7 @@ The question “Did life improve?” sounds simple until we specify a population
 
 An average can rise while some groups lose ground. A family's cash income can increase while working hours lengthen. Cheap manufactured goods may become more available even as industrial pollution imposes costs. These possibilities are not contradictions; they are reasons to separate dimensions of welfare.
 
-:::detail-level{level="detailed" title="Comparisons need consistent units"}
+:::section{title="Comparisons need consistent units"}
 A weekly wage is not the same as an hourly wage. Individual earnings are not household income. A price index depends on the goods and weights selected. Historical series often require reconstruction from incomplete records, so a responsible argument explains uncertainty and avoids treating every estimated decimal as an observed fact.
 :::
 

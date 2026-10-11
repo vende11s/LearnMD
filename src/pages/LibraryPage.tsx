@@ -2,7 +2,6 @@ import {
   ArrowRight,
   BookOpen,
   Plus,
-  Folder as FolderIcon,
   ChevronRight,
   SlidersHorizontal,
   Grid2X2,
@@ -10,9 +9,12 @@ import {
   Star,
   MoreHorizontal,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import type { Note, Folder } from '../storage';
 import { useStored } from '../hooks/useStored';
+import { useI18n } from '../i18n';
+import { FolderGlyph } from '../components/FolderIcon';
 
 export function LibraryPage({
   notes,
@@ -25,6 +27,7 @@ export function LibraryPage({
   openNote,
   onImport,
   onManage,
+  onDelete,
   onFavorite,
   onGenerate,
   onFolder,
@@ -39,10 +42,12 @@ export function LibraryPage({
   openNote: (id: string) => void;
   onImport: () => void;
   onManage: (id: string) => void;
+  onDelete: (id: string) => void;
   onFavorite: (n: Note) => void;
   onGenerate: () => void;
   onFolder: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const [view, setView] = useStored<'grid' | 'list'>('learnmd-view', 'grid');
   const visible = notes
     .filter(
@@ -65,50 +70,75 @@ export function LibraryPage({
     notes.find((n) => n.subject.toLowerCase().includes('calculus')) ??
     notes[0];
   const home = route === 'library' && !query;
+  const folderById = new Map(folders.map((folder) => [folder.id, folder]));
+  const childFolders = folders.filter((folder) => folder.parentId === folderId);
   return (
     <div className="page library-page">
       <div className="page-heading">
         <div>
-          <div className="eyebrow">A SPACE FOR CURIOUS MINDS</div>
+          <div className="eyebrow">
+            {t('A SPACE FOR CURIOUS MINDS', 'PRZESTRZEŃ DLA CIEKAWYCH ŚWIATA')}
+          </div>
           <h1>
             {query
-              ? 'Find a little clarity.'
+              ? t('Find a little clarity.', 'Znajdź to, co rozjaśnia myśli.')
               : folderId
-                ? folders.find((f) => f.id === folderId)?.name
+                ? (folderById.get(folderId)?.name ?? '')
                 : route === 'favorites'
-                  ? 'Keep the good ideas close.'
+                  ? t(
+                      'Keep the good ideas close.',
+                      'Dobre pomysły zawsze pod ręką.',
+                    )
                   : route === 'recent'
-                    ? 'Pick up where you left off.'
-                    : 'Your library of understanding.'}
+                    ? t(
+                        'Pick up where you left off.',
+                        'Wróć tam, gdzie skończyłeś.',
+                      )
+                    : t(
+                        'Your library of understanding.',
+                        'Twoja biblioteka zrozumienia.',
+                      )}
           </h1>
           <p className="page-description">
             {query
-              ? `Notes matching “${query}”`
+              ? t(`Notes matching “${query}”`, `Notatki pasujące do „${query}”`)
               : home
-                ? 'Big ideas, made a little clearer. Settle in and explore.'
-                : `${visible.length} ${visible.length === 1 ? 'note' : 'notes'} to come back to.`}
+                ? t(
+                    'Big ideas, made a little clearer. Settle in and explore.',
+                    'Wielkie idee, nieco jaśniejsze. Rozgość się i odkrywaj.',
+                  )
+                : t(
+                    `${visible.length} ${visible.length === 1 ? 'note' : 'notes'} to come back to.`,
+                    `Notatki, do których możesz wrócić: ${visible.length}.`,
+                  )}
           </p>
         </div>
         <button className="button secondary desktop-add" onClick={onImport}>
-          <Plus size={16} /> Add note
+          <Plus size={16} />
+          {t('Add note', 'Dodaj notatkę')}
         </button>
       </div>
       {home && featured && (
         <section className="featured-note">
           <div className="featured-copy">
             <span className="eyebrow">
-              <span className="status-dot" /> A GOOD PLACE TO BEGIN
+              <span className="status-dot" />
+              {t('A GOOD PLACE TO BEGIN', 'DOBRE MIEJSCE NA POCZĄTEK')}
             </span>
             <h2>{featured.title}</h2>
             <p>
               {featured.description ||
-                'Explore an idea, follow the reasoning, and make the connections that matter.'}
+                t(
+                  'Explore an idea, follow the reasoning, and make the connections that matter.',
+                  'Poznaj ideę, prześledź rozumowanie i dostrzeż ważne powiązania.',
+                )}
             </p>
             <button
               className="button primary"
               onClick={() => openNote(featured.id)}
             >
-              Open the notes <ArrowRight size={16} />
+              {t('Open the notes', 'Otwórz notatkę')}
+              <ArrowRight size={16} />
             </button>
             <span className="featured-meta">
               {featured.subject} <span>·</span>{' '}
@@ -116,7 +146,9 @@ export function LibraryPage({
                 1,
                 Math.ceil(featured.source.split(/\s+/).length / 220),
               )}{' '}
-              min read <span>·</span> Interactive notes
+              {t('min read', 'min czytania')}
+              <span>·</span>
+              {t('Interactive notes', 'Interaktywne notatki')}
             </span>
           </div>
           <div className="calculus-art" aria-hidden="true">
@@ -156,67 +188,70 @@ export function LibraryPage({
                 y
               </text>
               <text x="102" y="56" className="small-math">
-                a new way to see change
+                {t('a new way to see change', 'nowe spojrzenie na zmianę')}
               </text>
             </svg>
             <span className="art-caption">
-              SMALL STEPS. BEAUTIFUL CONNECTIONS.
+              {t(
+                'SMALL STEPS. BEAUTIFUL CONNECTIONS.',
+                'MAŁE KROKI. WAŻNE POWIĄZANIA.',
+              )}
             </span>
           </div>
         </section>
       )}
-      {folderId && folders.some((f) => f.parentId === folderId) && (
+      {!query && (folderId || home) && childFolders.length > 0 && (
         <div className="subfolders">
-          {folders
-            .filter((f) => f.parentId === folderId)
-            .map((f) => (
-              <button
-                className="button secondary"
-                key={f.id}
-                onClick={() => onFolder(f.id)}
-              >
-                <FolderIcon size={17} />
-                {f.name}
-                <ChevronRight size={14} />
-              </button>
-            ))}
+          {childFolders.map((f) => (
+            <button
+              className="button secondary"
+              key={f.id}
+              onClick={() => onFolder(f.id)}
+            >
+              <FolderGlyph icon={f.icon} size={17} />
+              {f.name}
+              <ChevronRight size={14} />
+            </button>
+          ))}
         </div>
       )}
       <div className="library-toolbar">
         <div className="library-tabs">
           <span className="selected">
             {query
-              ? 'Search results'
+              ? t('Search results', 'Wyniki wyszukiwania')
               : route === 'favorites'
-                ? 'Favorite notes'
+                ? t('Favorite notes', 'Ulubione notatki')
                 : route === 'recent'
-                  ? 'Recent notes'
-                  : 'All notes'}
+                  ? t('Recent notes', 'Ostatnie notatki')
+                  : t('All notes', 'Wszystkie notatki')}
             <span>{visible.length}</span>
           </span>
         </div>
         <div className="library-controls">
           <SlidersHorizontal size={14} />
           <select
-            aria-label="Sort notes"
+            aria-label={t('Sort notes', 'Sortuj notatki')}
             value={sort}
             onChange={(e) => setSort(e.target.value)}
           >
-            <option value="recent">Recently opened</option>
-            <option value="created">Date added</option>
-            <option value="title">Title, A–Z</option>
+            <option value="recent">
+              {t('Recently opened', 'Ostatnio otwierane')}
+            </option>
+            <option value="created">{t('Date added', 'Data dodania')}</option>
+            <option value="title">{t('Title, A–Z', 'Tytuł, A–Z')}</option>
           </select>
           <span className="toolbar-divider" />
           <button
             className={`icon-button ${view === 'grid' ? 'selected' : ''}`}
-            aria-label="Grid view"
+            aria-label={t('Grid view', 'Widok siatki')}
             onClick={() => setView('grid')}
           >
             <Grid2X2 size={16} />
           </button>
           <button
             className={`icon-button ${view === 'list' ? 'selected' : ''}`}
-            aria-label="List view"
+            aria-label={t('List view', 'Widok listy')}
             onClick={() => setView('list')}
           >
             <List size={18} />
@@ -234,7 +269,17 @@ export function LibraryPage({
                 <div>
                   <button
                     className={`icon-button ${n.favorite ? 'is-favorite' : ''}`}
-                    aria-label={`${n.favorite ? 'Unfavorite' : 'Favorite'} ${n.title}`}
+                    aria-label={
+                      n.favorite
+                        ? t(
+                            `Unfavorite ${n.title}`,
+                            `Usuń z ulubionych: ${n.title}`,
+                          )
+                        : t(
+                            `Favorite ${n.title}`,
+                            `Dodaj do ulubionych: ${n.title}`,
+                          )
+                    }
                     onClick={() => onFavorite(n)}
                   >
                     <Star
@@ -244,10 +289,18 @@ export function LibraryPage({
                   </button>
                   <button
                     className="icon-button"
-                    aria-label={`Manage ${n.title}`}
+                    aria-label={t(`Manage ${n.title}`, `Zarządzaj: ${n.title}`)}
                     onClick={() => onManage(n.id)}
                   >
                     <MoreHorizontal size={18} />
+                  </button>
+                  <button
+                    className="icon-button note-trash"
+                    aria-label={t(`Delete ${n.title}`, `Usuń ${n.title}`)}
+                    title={t('Delete note', 'Usuń notatkę')}
+                    onClick={() => onDelete(n.id)}
+                  >
+                    <Trash2 size={15} />
                   </button>
                 </div>
               </div>
@@ -261,13 +314,16 @@ export function LibraryPage({
               </button>
               <div className="note-card-footer">
                 <span>
-                  <FolderIcon size={13} />
-                  {folders.find((f) => f.id === n.folderId)?.name ??
-                    'Personal notes'}
+                  <FolderGlyph
+                    icon={folderById.get(n.folderId ?? '')?.icon}
+                    size={13}
+                  />
+                  {folderById.get(n.folderId ?? '')?.name ??
+                    t('No folder', 'Bez folderu')}
                 </span>
                 <span>
                   {Math.max(1, Math.ceil(n.source.split(/\s+/).length / 220))}{' '}
-                  min read
+                  {t('min read', 'min czytania')}
                 </span>
               </div>
             </article>
@@ -276,15 +332,25 @@ export function LibraryPage({
       ) : (
         <div className="empty-state">
           <BookOpen size={38} />
-          <h2>{query ? 'No notes found.' : 'Room for a new idea.'}</h2>
+          <h2>
+            {query
+              ? t('No notes found.', 'Nie znaleziono notatek.')
+              : t('Room for a new idea.', 'Miejsce na nowy pomysł.')}
+          </h2>
           <p>
             {query
-              ? 'Try a different word or phrase.'
-              : 'Bring a .learn.md document into your library to get started.'}
+              ? t(
+                  'Try a different word or phrase.',
+                  'Spróbuj innego słowa lub wyrażenia.',
+                )
+              : t(
+                  'Bring a .learn.md document into your library to get started.',
+                  'Na początek dodaj dokument .learn.md do biblioteki.',
+                )}
           </p>
           <button className="button primary" onClick={onImport}>
             <Plus size={16} />
-            Add a note
+            {t('Add a note', 'Dodaj notatkę')}
           </button>
         </div>
       )}
@@ -294,17 +360,31 @@ export function LibraryPage({
             <Sparkles size={18} />
           </span>
           <div>
-            <strong>Turn your materials into something that clicks.</strong>
-            <p>Get a ready-to-use prompt for thoughtful, interactive notes.</p>
+            <strong>
+              {t(
+                'Turn your materials into something that clicks.',
+                'Zamień swoje materiały w coś, co łatwo zrozumieć.',
+              )}
+            </strong>
+            <p>
+              {t(
+                'Get a ready-to-use prompt for thoughtful, interactive notes.',
+                'Skorzystaj z gotowego promptu do tworzenia przemyślanych, interaktywnych notatek.',
+              )}
+            </p>
           </div>
           <button className="text-button" onClick={onGenerate}>
-            Generate notes <ArrowRight size={15} />
+            {t('Generate notes', 'Generuj notatki')}
+            <ArrowRight size={15} />
           </button>
         </footer>
       )}
       <div className="page-footnote">
-        <span className="status-dot" /> Stored on this device. A quiet place to
-        think.
+        <span className="status-dot" />
+        {t(
+          'Stored on this device. A quiet place to think.',
+          'Zapisane na tym urządzeniu. Spokojne miejsce do myślenia.',
+        )}
       </div>
     </div>
   );

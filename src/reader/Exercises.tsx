@@ -1,3 +1,5 @@
+import { sourceProps } from './source';
+import { useI18n } from '../i18n';
 import { useEffect, useId, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowRight, Check, RotateCcw } from 'lucide-react';
 import type { LearnNode } from '../format/types';
@@ -33,6 +35,7 @@ function Feedback({
 }
 
 export function Quiz({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const choices = named(node, ['choice']);
   const multiple = flag(node, 'multiple');
@@ -44,15 +47,22 @@ export function Quiz({ node }: { node: LearnNode }) {
   );
   return (
     <section className="learn-exercise learn-quiz">
-      <BlockHeading node={node} fallback="Check your understanding" />
+      <BlockHeading
+        node={node}
+        fallback={t('Check your understanding', 'Sprawdź zrozumienie')}
+      />
       {render(rest(node, ['choice']))}
       <fieldset>
         <legend className="learn-sr-only">
-          {titleOf(node, 'Choose the correct answer')}
+          {titleOf(
+            node,
+            t('Choose the correct answer', 'Wybierz poprawną odpowiedź'),
+          )}
         </legend>
         {choices.map((choice, index) => (
           <label
             id={elementId(choice)}
+            {...sourceProps(choice, 'structural')}
             className={`learn-choice ${checked && flag(choice, 'correct') ? 'is-correct' : ''} ${selected.has(index) ? 'is-selected' : ''}`}
             key={index}
           >
@@ -75,7 +85,10 @@ export function Quiz({ node }: { node: LearnNode }) {
             />
             <span>{render(choice.children)}</span>
             {checked && flag(choice, 'correct') && (
-              <Check size={16} aria-label="Correct choice" />
+              <Check
+                size={16}
+                aria-label={t('Correct choice', 'Poprawna odpowiedź')}
+              />
             )}
           </label>
         ))}
@@ -87,24 +100,39 @@ export function Quiz({ node }: { node: LearnNode }) {
           disabled={!selected.size}
           onClick={() => setChecked(true)}
         >
-          Check answer
+          {t('Check answer', 'Sprawdź odpowiedź')}{' '}
         </button>
-        {multiple && <span className="learn-help">Choose all that apply</span>}
+        {multiple && (
+          <span className="learn-help">
+            {t(
+              'Choose all that apply',
+              'Zaznacz wszystkie poprawne odpowiedzi',
+            )}{' '}
+          </span>
+        )}
       </div>
       {checked && (
         <Feedback success={correct}>
-          <strong>{correct ? 'That’s right.' : 'Take another look.'}</strong>
+          <strong>
+            {correct
+              ? t('That’s right.', 'Zgadza się.')
+              : t('Take another look.', 'Przyjrzyj się jeszcze raz.')}
+          </strong>
           {attr(node, 'explanation') && <p>{attr(node, 'explanation')}</p>}
           {!correct && !attr(node, 'explanation') && (
             <p>
-              The correct {multiple ? 'choices are' : 'choice is'} marked.
-              Compare the reasoning with your selection.
+              {t(
+                multiple
+                  ? 'The correct choices are marked. Compare the reasoning with your selection.'
+                  : 'The correct choice is marked. Compare the reasoning with your selection.',
+                'Poprawne odpowiedzi zostały oznaczone. Porównaj ich uzasadnienie ze swoim wyborem.',
+              )}
             </p>
           )}
         </Feedback>
       )}
       <div className="print-only">
-        <strong>Answer:</strong>{' '}
+        <strong>{t('Answer:', 'Odpowiedź:')} </strong>{' '}
         {choices
           .filter((choice) => flag(choice, 'correct'))
           .map(plainText)
@@ -116,6 +144,7 @@ export function Quiz({ node }: { node: LearnNode }) {
 }
 
 export function FillBlank({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const [answer, setAnswer] = useState('');
   const [checked, setChecked] = useState(false);
@@ -129,7 +158,10 @@ export function FillBlank({ node }: { node: LearnNode }) {
   const id = useId();
   return (
     <section className="learn-exercise">
-      <BlockHeading node={node} fallback="Complete the thought" />
+      <BlockHeading
+        node={node}
+        fallback={t('Complete the thought', 'Uzupełnij odpowiedź')}
+      />
       {render(node.children)}
       <form
         className="learn-inline-form print-hide"
@@ -139,7 +171,7 @@ export function FillBlank({ node }: { node: LearnNode }) {
         }}
       >
         <label className="learn-sr-only" htmlFor={id}>
-          {attr(node, 'title', 'Your answer')}
+          {attr(node, 'title', t('Your answer', 'Twoja odpowiedź'))}
         </label>
         <input
           id={id}
@@ -148,29 +180,39 @@ export function FillBlank({ node }: { node: LearnNode }) {
             setAnswer(event.target.value);
             setChecked(false);
           }}
-          placeholder={attr(node, 'placeholder', 'Your answer…')}
+          placeholder={attr(
+            node,
+            'placeholder',
+            t('Your answer…', 'Twoja odpowiedź…'),
+          )}
           autoComplete="off"
         />
         <button className="learn-primary-button" disabled={!answer.trim()}>
-          Check answer
+          {t('Check answer', 'Sprawdź odpowiedź')}{' '}
         </button>
       </form>
       {checked && (
         <Feedback success={correct}>
           {correct
-            ? 'Exactly right.'
-            : 'Not quite — revisit the explanation and try again.'}
+            ? t('Exactly right.', 'Dokładnie tak.')
+            : t(
+                'Not quite — revisit the explanation and try again.',
+                'Jeszcze nie — wróć do wyjaśnienia i spróbuj ponownie.',
+              )}
         </Feedback>
       )}
       <details className="learn-small-reveal">
-        <summary>Show accepted answer</summary>
-        <p>{attr(node, 'answer').split('|').join(' or ')}</p>
+        <summary>
+          {t('Show accepted answer', 'Pokaż poprawną odpowiedź')}{' '}
+        </summary>
+        <p>{attr(node, 'answer').split('|').join(t(' or ', ' lub '))}</p>
       </details>
     </section>
   );
 }
 
 export function Match({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const pairs = named(node, ['pair']);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -184,11 +226,19 @@ export function Match({ node }: { node: LearnNode }) {
   const id = useId();
   return (
     <section className="learn-exercise">
-      <BlockHeading node={node} fallback="Connect the ideas" />
+      <BlockHeading
+        node={node}
+        fallback={t('Connect the ideas', 'Połącz pojęcia')}
+      />
       {render(rest(node, ['pair']))}
       <div className="learn-match-list">
         {pairs.map((pair, index) => (
-          <div className="learn-match-row" key={index} id={elementId(pair)}>
+          <div
+            className="learn-match-row"
+            key={index}
+            id={elementId(pair)}
+            {...sourceProps(pair, 'structural')}
+          >
             <label htmlFor={`${id}-${index}`}>{attr(pair, 'left')}</label>
             <ArrowRight size={14} aria-hidden="true" />
             <select
@@ -199,7 +249,9 @@ export function Match({ node }: { node: LearnNode }) {
                 setChecked(false);
               }}
             >
-              <option value="">Choose a match</option>
+              <option value="">
+                {t('Choose a match', 'Wybierz dopasowanie')}{' '}
+              </option>
               {choices.map((choice) => (
                 <option key={choice}>{choice}</option>
               ))}
@@ -214,13 +266,19 @@ export function Match({ node }: { node: LearnNode }) {
         disabled={pairs.some((_, index) => !answers[index])}
         onClick={() => setChecked(true)}
       >
-        Check matches
+        {t('Check matches', 'Sprawdź dopasowania')}{' '}
       </button>
       {checked && (
         <Feedback success={correct}>
           {correct
-            ? 'All connections are correct.'
-            : `${pairs.filter((pair, index) => answers[index] === attr(pair, 'right')).length} of ${pairs.length} connections are correct. Try adjusting the others.`}
+            ? t(
+                'All connections are correct.',
+                'Wszystkie połączenia są poprawne.',
+              )
+            : t(
+                `${pairs.filter((pair, index) => answers[index] === attr(pair, 'right')).length} of ${pairs.length} connections are correct. Try adjusting the others.`,
+                `Poprawne połączenia: ${pairs.filter((pair, index) => answers[index] === attr(pair, 'right')).length} z ${pairs.length}. Spróbuj poprawić pozostałe.`,
+              )}
         </Feedback>
       )}
     </section>
@@ -228,6 +286,7 @@ export function Match({ node }: { node: LearnNode }) {
 }
 
 export function Sort({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const items = named(node, ['item']);
   const [order, setOrder] = useState(() =>
@@ -245,11 +304,18 @@ export function Sort({ node }: { node: LearnNode }) {
   const correct = order.every((value, index) => value === index);
   return (
     <section className="learn-exercise">
-      <BlockHeading node={node} fallback="Put it in order" />
+      <BlockHeading
+        node={node}
+        fallback={t('Put it in order', 'Ułóż we właściwej kolejności')}
+      />
       {render(rest(node, ['item']))}
       <ol className="learn-sort-list print-hide">
         {order.map((itemIndex, position) => (
-          <li key={itemIndex} id={elementId(items[itemIndex])}>
+          <li
+            key={itemIndex}
+            id={elementId(items[itemIndex])}
+            {...sourceProps(items[itemIndex], 'structural')}
+          >
             <span className="learn-sort-position">{position + 1}</span>
             <div>
               {attr(items[itemIndex], 'title') && (
@@ -261,7 +327,10 @@ export function Sort({ node }: { node: LearnNode }) {
               <button
                 type="button"
                 className="learn-icon-button"
-                aria-label={`Move ${titleOf(items[itemIndex], `item ${itemIndex + 1}`)} up`}
+                aria-label={t(
+                  `Move ${titleOf(items[itemIndex], `item ${itemIndex + 1}`)} up`,
+                  `Przesuń ${titleOf(items[itemIndex], `element ${itemIndex + 1}`)} w górę`,
+                )}
                 disabled={position === 0}
                 onClick={() => move(position, -1)}
               >
@@ -270,7 +339,10 @@ export function Sort({ node }: { node: LearnNode }) {
               <button
                 type="button"
                 className="learn-icon-button"
-                aria-label={`Move ${titleOf(items[itemIndex], `item ${itemIndex + 1}`)} down`}
+                aria-label={t(
+                  `Move ${titleOf(items[itemIndex], `item ${itemIndex + 1}`)} down`,
+                  `Przesuń ${titleOf(items[itemIndex], `element ${itemIndex + 1}`)} w dół`,
+                )}
                 disabled={position === order.length - 1}
                 onClick={() => move(position, 1)}
               >
@@ -285,13 +357,16 @@ export function Sort({ node }: { node: LearnNode }) {
         className="learn-primary-button print-hide"
         onClick={() => setChecked(true)}
       >
-        Check order
+        {t('Check order', 'Sprawdź kolejność')}{' '}
       </button>
       {checked && (
         <Feedback success={correct}>
           {correct
-            ? 'That sequence is correct.'
-            : 'The sequence needs another look. Use the arrows to move each step.'}
+            ? t('That sequence is correct.', 'Ta kolejność jest poprawna.')
+            : t(
+                'The sequence needs another look. Use the arrows to move each step.',
+                'Sprawdź kolejność jeszcze raz. Przesuwaj kroki za pomocą strzałek.',
+              )}
         </Feedback>
       )}
       <ol className="print-only">
@@ -307,6 +382,7 @@ export function Sort({ node }: { node: LearnNode }) {
 }
 
 export function Question({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render, navigation } = useReader();
   const [prediction, setPrediction] = useState('');
   const [revealed, setRevealed] = useState(false);
@@ -323,21 +399,31 @@ export function Question({ node }: { node: LearnNode }) {
     <section className="learn-exercise">
       <BlockHeading
         node={node}
-        fallback={isPrediction ? 'Pause and predict' : 'A question to consider'}
+        fallback={
+          isPrediction
+            ? t('Pause and predict', 'Zatrzymaj się i przewidź wynik')
+            : t('A question to consider', 'Pytanie do przemyślenia')
+        }
       />
       {prompt && <p className="learn-question-prompt">{prompt}</p>}
       {bodyIsQuestion && render(rest(node, ['answer', 'explanation']))}
       {isPrediction && (
         <div className="print-hide">
           <label className="learn-help" htmlFor={id}>
-            What do you expect to happen?
+            {t(
+              'What do you expect to happen?',
+              'Jakiego wyniku się spodziewasz?',
+            )}{' '}
           </label>
           <textarea
             id={id}
             rows={2}
             value={prediction}
             onChange={(event) => setPrediction(event.target.value)}
-            placeholder="Write your reasoning before revealing the outcome…"
+            placeholder={t(
+              'Write your reasoning before revealing the outcome…',
+              'Zapisz swoje rozumowanie, zanim poznasz wynik…',
+            )}
           />
         </div>
       )}
@@ -349,17 +435,21 @@ export function Question({ node }: { node: LearnNode }) {
         onClick={() => setRevealed(!revealed)}
       >
         {revealed
-          ? 'Hide explanation'
+          ? t('Hide explanation', 'Ukryj wyjaśnienie')
           : isPrediction
-            ? 'Reveal outcome'
-            : 'Explore the answer'}
+            ? t('Reveal outcome', 'Pokaż wynik')
+            : t('Explore the answer', 'Poznaj odpowiedź')}
         <ArrowRight size={14} />
       </button>
       <div className="learn-answer" id={`${id}-answer`} hidden={!revealed}>
         {attr(node, 'answer') && <p>{attr(node, 'answer')}</p>}
         {answer.length > 0
           ? answer.map((item, index) => (
-              <div key={index} id={elementId(item)}>
+              <div
+                key={index}
+                id={elementId(item)}
+                {...sourceProps(item, 'structural')}
+              >
                 {render(item.children)}
               </div>
             ))
@@ -370,6 +460,7 @@ export function Question({ node }: { node: LearnNode }) {
 }
 
 export function Checklist({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const directItems = named(node, ['item']);
   const items = directItems.length
@@ -394,13 +485,17 @@ export function Checklist({ node }: { node: LearnNode }) {
         ),
       )}
       <div className="learn-checklist-progress" aria-live="polite">
-        {checked.size} of {items.length} considered
+        {t(
+          `${checked.size} of ${items.length} considered`,
+          `Rozważono: ${checked.size} z ${items.length}`,
+        )}
       </div>
       {items.map((item, index) => (
         <label
           className="learn-checklist-item"
           key={index}
           id={elementId(item)}
+          {...sourceProps(item, 'structural')}
         >
           <input
             type="checkbox"
@@ -427,15 +522,19 @@ export function Checklist({ node }: { node: LearnNode }) {
 }
 
 export function Scratchpad({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const [value, setValue] = useState('');
   const id = useId();
   return (
     <section className="learn-scratchpad">
-      <BlockHeading node={node} fallback="Space to think" />
+      <BlockHeading
+        node={node}
+        fallback={t('Space to think', 'Miejsce na przemyślenia')}
+      />
       {render(node.children)}
       <label className="learn-sr-only" htmlFor={id}>
-        {titleOf(node, 'Temporary scratchpad')}
+        {titleOf(node, t('Temporary scratchpad', 'Brudnopis tymczasowy'))}
       </label>
       <textarea
         id={id}
@@ -447,18 +546,26 @@ export function Scratchpad({ node }: { node: LearnNode }) {
         placeholder={attr(
           node,
           'placeholder',
-          'Try a calculation, sketch an argument, or put it in your own words…',
+          t(
+            'Try a calculation, sketch an argument, or put it in your own words…',
+            'Spróbuj obliczeń, zapisz argument lub wyjaśnij to własnymi słowami…',
+          ),
         )}
       />
       <div className="learn-scratchpad-footer">
-        <span>Temporary · cleared when you leave this note</span>
+        <span>
+          {t(
+            'Temporary · cleared when you leave this note',
+            'Tymczasowe · znika po opuszczeniu notatki',
+          )}{' '}
+        </span>
         {value && (
           <button
             type="button"
             className="learn-text-button"
             onClick={() => setValue('')}
           >
-            Clear
+            {t('Clear', 'Wyczyść')}{' '}
           </button>
         )}
       </div>
@@ -467,6 +574,7 @@ export function Scratchpad({ node }: { node: LearnNode }) {
 }
 
 export function DecisionTree({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render, navigation } = useReader();
   const nodes = named(node, ['node']);
   const edges = named(node, ['edge']);
@@ -491,20 +599,28 @@ export function DecisionTree({ node }: { node: LearnNode }) {
         ...(['yes', 'no', 'next'] as const)
           .filter((key) => attr(current, key))
           .map((key) => ({
-            label: key === 'next' ? 'Continue' : key === 'yes' ? 'Yes' : 'No',
+            label:
+              key === 'next'
+                ? t('Continue', 'Dalej')
+                : key === 'yes'
+                  ? t('Yes', 'Tak')
+                  : t('No', 'Nie'),
             target: attr(current, key),
           })),
         ...edges
           .filter((edge) => attr(edge, 'from') === attr(current, 'id'))
           .map((edge) => ({
-            label: attr(edge, 'label', 'Continue'),
+            label: attr(edge, 'label', t('Continue', 'Dalej')),
             target: attr(edge, 'to'),
           })),
       ]
     : [];
   return (
     <section className="learn-decision-tree">
-      <BlockHeading node={node} fallback="Follow the reasoning" />
+      <BlockHeading
+        node={node}
+        fallback={t('Follow the reasoning', 'Prześledź rozumowanie')}
+      />
       {render(rest(node, ['node', 'edge']))}
       {path.length > 1 && (
         <p className="learn-help print-hide">
@@ -539,7 +655,12 @@ export function DecisionTree({ node }: { node: LearnNode }) {
         </div>
       ))}
       {!current && (
-        <p className="learn-empty">The starting decision is unavailable.</p>
+        <p className="learn-empty">
+          {t(
+            'The starting decision is unavailable.',
+            'Początkowy punkt decyzji jest niedostępny.',
+          )}{' '}
+        </p>
       )}
       <div className="learn-controls print-hide">
         {choices.map((choice, index) => (
@@ -558,7 +679,9 @@ export function DecisionTree({ node }: { node: LearnNode }) {
           </button>
         ))}
         {current && !choices.length && (
-          <span className="learn-eyebrow">End of this path</span>
+          <span className="learn-eyebrow">
+            {t('End of this path', 'Koniec tej ścieżki')}{' '}
+          </span>
         )}
       </div>
       {path.length > 1 && (
@@ -568,20 +691,24 @@ export function DecisionTree({ node }: { node: LearnNode }) {
             className="learn-text-button"
             onClick={() => setPath(path.slice(0, -1))}
           >
-            Back one decision
+            {t('Back one decision', 'Poprzednia decyzja')}{' '}
           </button>
           <button
             type="button"
             className="learn-text-button"
             onClick={() => setPath([start])}
           >
-            <RotateCcw size={13} /> Start again
+            <RotateCcw size={13} /> {t('Start again', 'Zacznij od nowa')}{' '}
           </button>
         </div>
       )}
       <div className="print-only">
         {edges.map((edge, index) => (
-          <p key={index} id={elementId(edge)}>
+          <p
+            key={index}
+            id={elementId(edge)}
+            {...sourceProps(edge, 'structural')}
+          >
             {attr(edge, 'from')} → {attr(edge, 'to')}: {attr(edge, 'label')}
           </p>
         ))}

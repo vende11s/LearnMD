@@ -45,18 +45,21 @@ The converse fails: $f(x)=|x|$ is continuous but not differentiable at zero.
 CHILD RELATIONSHIPS
 Ordinary Markdown is allowed inside every content block unless its purpose is purely declarative (variable, toggle, reference, divider, pair, edge, participant, message). Layout and semantic wrappers can contain ordinary Markdown and other compatible public components. Structural children belong directly inside their stated parent. For a component with an explicit child list, use only those directive child types; ordinary explanatory Markdown may precede the children. Put other public components inside a structural child's body, not beside it. Diagram nodes may contain rich explanations. Tree item blocks can contain further item blocks. Lists, tables, blockquotes, code, and math retain their ordinary Markdown grammar.
 
+CAROUSELS AND LONG QUESTION SETS
+Use carousel with one or more slide children to paginate a long explanation, worked example, or question set. There is no fixed slide-count cap beyond the document resource limits. A slide can contain any compatible content: ordinary text, a source excerpt, a quiz, a question with a revealable answer, a formula, a diagram, or several composed blocks. A carousel is a general layout, so do not assume every slide must be a question. For long quizzes, place each quiz or question component inside its own slide and include brief context or recap slides when helpful. Set initial="0" to start at the first slide; slide title is optional. Navigation is manual, with no autoplay. Interactions remain intact when moving between slides, and printing includes every slide.
+
+When a question depends on a passage from the supplied materials, place the relevant short excerpt in ordinary Markdown blockquote syntax (lines beginning with >) on the question slide or a clearly identified context slide. Preserve the source's wording and attribution when quoting; label paraphrases as paraphrases. Quote only material actually supplied by the user, and never invent source text or citations. Keep enough context visible for the question to make sense. The carousel example below uses an explicitly labeled demonstration excerpt rather than claiming a quotation from an external source.
+
 MATH AND CODE
 Use $...$ for inline mathematics and $$ on separate lines for display mathematics. Use real LaTeX, including \frac, \sqrt, matrices, cases, and \begin{aligned}...\end{aligned}. Backslashes are literal in Markdown; do not double-escape them as JSON. In aligned math, use & for alignment and \\ for row breaks. Do not use executable LaTeX commands, custom macros, external resources, or an entire LaTeX document. The formula block provides equation numbering and semantic references. Put a fenced code block with a language identifier inside code or code-walkthrough. Never place executable scripts in directives. Code examples are displayed, never run.
 
 IDS AND REFERENCES
 Set id="meaningful-id" on public blocks to create a semantic target. IDs begin with a letter and contain only letters, digits, hyphens, and underscores (maximum 80 characters). IDs must be unique in the document. Use reference{target="meaningful-id" label="See the definition"} as a container block. Headings receive lowercase slugs, with repeated headings suffixed -2, -3, and so on. Prefer explicit component IDs for durable references. Nodes and participants use diagram-local IDs; edges/messages resolve only within their own diagram. Diagram node IDs are not document reference targets. All references must resolve. A graph can contain cycles; navigation is explicit and bounded, never automatically executed.
 
-DETAIL AND SHARED STATE
-The reader has Concise, Standard, and Detailed modes. Content outside detail-level remains visible in all modes. A detail-level block with level="standard" is visible in Standard and Detailed. A level="detailed" block is visible only in Detailed. Preserve the core argument in all modes. Switching detail does not generate or rewrite text.
-
+SHARED STATE
 variable{name="show-proof" value="false"} declares one document-scoped STRING value. Each name has exactly one declaration. Declarations are collected before interaction, regardless of location. toggle{target="show-proof" on="true" off="false" label="Show assumptions"} switches between two literal strings; its default on/off values are "true" and "false". conditional{target="show-proof" equals="true"} shows content on exact string equality. Every consumer must refer to a declaration. There are no arithmetic expressions, callbacks, computed variables, automatic transitions, or executable dependencies; reactive cycles are therefore not possible. Interaction is temporary and does not modify note source.
 
-sync{group="worked-example"} gives descendant steps, derivation, tabs, layers, variants, and spotlight a shared zero-based selected index. Separate sync wrappers with the same group also coordinate. Use the same number and order of items in coordinated blocks; shorter blocks clamp to their final item. Nested sync wrappers use their nearest group. Do not reuse a group for unrelated explanations. initial is a zero-based starting item index where supported.
+sync{group="worked-example"} gives descendant steps, derivation, tabs, carousel, layers, variants, and spotlight a shared zero-based selected index. Separate sync wrappers with the same group also coordinate. Use the same number and order of items in coordinated blocks; shorter blocks clamp to their final item. Nested sync wrappers use their nearest group. Do not reuse a group for unrelated explanations. initial is a zero-based starting item index where supported.
 
 ASSETS, SAFETY, AND FALLBACKS
 Use relative image paths such as assets/circuit.png when the PNG, JPEG, GIF, WebP, or AVIF asset accompanies the imported document. Do not use absolute filesystem paths, parent-directory traversal, data URLs, script URLs, protocol-relative URLs, iframes, or raw HTML. For remote resources use HTTPS and meaningful alternative text; the reader may require an explicit action to load external content. Embed blocks provide explicit external resource links or user-activated native audio/video playback from HTTPS URLs. Arbitrary embedded web pages are not allowed. A pasted document cannot include local image bytes: use an HTTPS image, omit the image, or explain that a bundled file is required. Prefer native diagrams with node/edge data over images when their structure conveys the concept.
@@ -182,6 +185,63 @@ f′(x)=\lim_{h\to0}\frac{f(x+h)-f(x)}h
 $$
 :::
 ::::
+
+### carousel
+A manually paginated sequence of slides containing arbitrary Markdown and interactive components. Keeps long question sets compact without autoplay.
+- id: Optional. Unique semantic ID, beginning with a letter.
+- title: Optional. Optional visible title.
+- initial: Optional. Initial zero-based slide index. Default: 0. Integer from 0 to 19999.
+Direct directive children: slide.
+May appear at document level or inside compatible content containers.
+Working example:
+
+::::::carousel{title="Continuity and differentiability" initial="0"}
+:::::slide{title="Start with the source"}
+> **Source excerpt for this example:** If a function is differentiable at a point, it is continuous there. The converse is false.
+
+Read the statement, then work through the questions. Each slide can contain text, mathematics, diagrams, or interactive blocks.
+:::::
+
+:::::slide{title="Read the implication"}
+::::quiz{explanation="The statement guarantees one direction only. Its converse is explicitly false."}
+Which implication is guaranteed by the excerpt?
+
+:::choice{correct="true"}
+Differentiability implies continuity.
+:::
+
+:::choice{correct="false"}
+Continuity implies differentiability.
+:::
+::::
+:::::
+
+:::::slide{title="Find a counterexample"}
+::::quiz{explanation="Absolute value is continuous at zero, but its left and right derivatives differ."}
+Which function is a counterexample to the converse at zero?
+
+:::choice{correct="false"}
+$f(x)=x^2$
+:::
+
+:::choice{correct="true"}
+$f(x)=|x|$
+:::
+::::
+:::::
+
+:::::slide{title="Explain the reasoning"}
+:::question{answer="Differentiability concerns a limit of difference quotients near the point. A value at one point does not establish that limit."}
+Why is checking a function’s value at a point insufficient to establish differentiability?
+:::
+:::::
+
+:::::slide{title="Take the idea with you"}
+:::summary
+Keep the direction of an implication clear. A continuous graph can have a corner, so continuity alone does not guarantee a derivative.
+:::
+:::::
+::::::
 
 ### accordion
 Independent expandable explanations.
@@ -443,7 +503,7 @@ Try subtracting the constant term from both sides.
 :::
 
 ### layers
-Switch between named levels of explanation.
+Manually switch between named explanations, such as intuitive and formal approaches.
 - id: Optional. Unique semantic ID, beginning with a letter.
 - title: Optional. Optional visible title.
 - initial: Optional. Initial zero-based layer. Integer from 0 to 100.
@@ -462,19 +522,6 @@ T(\alpha u+\beta v)=\alpha T(u)+\beta T(v)
 $$
 :::
 ::::
-
-### detail-level
-Show content at or above a document detail threshold.
-- id: Optional. Unique semantic ID, beginning with a letter.
-- title: Optional. Optional visible title.
-- level: Required. Minimum visible detail level. Allowed: concise, standard, detailed.
-Content: ordinary Markdown and compatible nested blocks.
-May appear at document level or inside compatible content containers.
-Working example:
-
-:::detail-level{level="detailed"}
-At a corner, the left and right derivatives may disagree.
-:::
 
 ### variants
 Select among alternative explanations or methods.
@@ -1270,7 +1317,6 @@ An explanation of this perspective.
 One labeled layer inside layers.
 - id: Optional. Unique semantic ID, beginning with a letter.
 - title: Optional. Optional visible title.
-- level: Optional. Associated detail level. Allowed: concise, standard, detailed.
 Content: ordinary Markdown and compatible nested blocks.
 Allowed direct parents: layers.
 Working example:
@@ -1334,6 +1380,20 @@ Working example:
 ::::split-view
 :::panel{title="Perspective"}
 An explanation of this perspective.
+:::
+::::
+
+### slide (structural child)
+One carousel page. Its optional title names the page; its body can contain text, formulas, questions, quizzes, or other compatible components.
+- id: Optional. Unique semantic ID, beginning with a letter.
+- title: Optional. Optional visible title.
+Content: ordinary Markdown and compatible nested blocks.
+Allowed direct parents: carousel.
+Working example:
+
+::::carousel
+:::slide{title="One idea at a time"}
+A page can introduce an idea before the next page asks a question about it.
 :::
 ::::
 

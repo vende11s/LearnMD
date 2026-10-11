@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import {
   Component,
   Fragment,
@@ -14,7 +15,6 @@ import type { LearnNode, ParsedDocument } from '../format/types';
 import {
   Accordion,
   Annotated,
-  Detail,
   Disclosure,
   Progression,
   Spotlight,
@@ -65,14 +65,15 @@ import {
   SyncContext,
   titleOf,
   useReader,
-  type DetailLevel,
 } from './context';
 import 'katex/dist/katex.min.css';
 import './reader.css';
+import { Carousel } from './Carousel';
+import { sourceProps } from './source';
+import { componentLabel } from './labels';
 
 export interface ReaderContentProps {
   document: ParsedDocument;
-  detail: DetailLevel;
   assets?: Record<string, string>;
   allowRemote?: boolean;
   /** The application renders the title itself and preserves that heading's semantic ID. */
@@ -95,6 +96,7 @@ const capitalize = (value: string) =>
   value.charAt(0).toUpperCase() + value.slice(1);
 
 function Educational({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render, numbers } = useReader();
   const name = node.name ?? 'callout';
   const number = numbers.get(node);
@@ -116,7 +118,7 @@ function Educational({ node }: { node: LearnNode }) {
       <div className="learn-educational-heading">
         {icon}
         <span>
-          {capitalize(name)}
+          {componentLabel(name, t)}
           {number ? ` ${number}` : ''}
         </span>
         {attr(node, 'title') && <h4>{attr(node, 'title')}</h4>}
@@ -127,6 +129,7 @@ function Educational({ node }: { node: LearnNode }) {
 }
 
 function Layout({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const name = node.name ?? 'section';
   const columns = numeric(
@@ -151,7 +154,12 @@ function Layout({ node }: { node: LearnNode }) {
               id={elementId(panel)}
               className="learn-comparison-panel"
             >
-              <h5>{titleOf(panel, `Perspective ${index + 1}`)}</h5>
+              <h5>
+                {titleOf(
+                  panel,
+                  t(`Perspective ${index + 1}`, `Perspektywa ${index + 1}`),
+                )}
+              </h5>
               {render(panel.children)}
             </div>
           ))}
@@ -171,6 +179,7 @@ function Layout({ node }: { node: LearnNode }) {
 }
 
 function SharedValue({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { values, setValue, render } = useReader();
   const name = attr(node, 'target');
   const known = Object.hasOwn(values, name);
@@ -204,7 +213,10 @@ function SharedValue({ node }: { node: LearnNode }) {
       </button>
       {!known && (
         <span className="learn-help">
-          The state “{name}” has not been declared.
+          {t(
+            `The state “${name}” has not been declared.`,
+            `Stan „${name}” nie został zadeklarowany.`,
+          )}
         </span>
       )}
       {render(node.children)}
@@ -213,14 +225,15 @@ function SharedValue({ node }: { node: LearnNode }) {
 }
 
 function Prerequisites({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const items = named(node, ['item']);
   return (
     <aside className="learn-prerequisites">
       <BlockHeading
         node={node}
-        fallback="Before you begin"
-        eyebrow="Prerequisites"
+        fallback={t('Before you begin', 'Zanim zaczniesz')}
+        eyebrow={t('Prerequisites', 'Wymagana wiedza')}
       />
       {render(rest(node, ['item']))}
       {items.length > 0 && (
@@ -271,6 +284,8 @@ function CustomComponent({ node }: { node: LearnNode }) {
       return <Tabs node={node} mode={name} />;
     case 'accordion':
       return <Accordion node={node} />;
+    case 'carousel':
+      return <Carousel node={node} />;
     case 'steps':
     case 'derivation':
       return <Progression node={node} />;
@@ -279,8 +294,6 @@ function CustomComponent({ node }: { node: LearnNode }) {
     case 'hint':
     case 'popover':
       return <Disclosure node={node} />;
-    case 'detail-level':
-      return <Detail node={node} />;
     case 'spotlight':
       return <Spotlight node={node} />;
     case 'annotated':
@@ -371,19 +384,36 @@ class BlockErrorBoundary extends Component<
     return { error: true };
   }
   render() {
-    if (this.state.error)
-      return (
-        <aside className="learn-render-error">
-          <strong>This block could not be displayed.</strong>
-          <p>The rest of your note is available. Source content:</p>
-          <pre>{plainText(this.props.node)}</pre>
-        </aside>
-      );
+    if (this.state.error) return <RenderFailure node={this.props.node} />;
     return this.props.children;
   }
 }
 
-function collect(document: ParsedDocument) {
+function RenderFailure({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
+  return (
+    <aside className="learn-render-error">
+      <strong>
+        {t(
+          'This block could not be displayed.',
+          'Nie udało się wyświetlić tego bloku.',
+        )}{' '}
+      </strong>
+      <p>
+        {t(
+          'The rest of your note is available. Source content:',
+          'Pozostała część notatki jest dostępna. Treść źródłowa:',
+        )}{' '}
+      </p>
+      <pre>{plainText(node)}</pre>
+    </aside>
+  );
+}
+
+function collect(
+  document: ParsedDocument,
+  t: (english: string, polish: string) => string,
+) {
   const references = new Map<
     string,
     { title: string; number?: number; name: string }
@@ -414,10 +444,10 @@ function collect(document: ParsedDocument) {
             'title',
             node.type === 'heading'
               ? plainText(node)
-              : `${capitalize(name)}${numbers.has(node) ? ` ${numbers.get(node)}` : ''}`,
+              : `${componentLabel(name, t)}${numbers.has(node) ? ` ${numbers.get(node)}` : ''}`,
           ),
           number: numbers.get(node),
-          name: capitalize(name),
+          name: componentLabel(name, t),
         });
       if (node.type === 'definition' && node.identifier)
         definitions.set(node.identifier.toLowerCase(), node);
@@ -431,6 +461,7 @@ function collect(document: ParsedDocument) {
         inheritedGroup &&
         [
           'steps',
+          'carousel',
           'derivation',
           'tabs',
           'layers',
@@ -459,13 +490,13 @@ function collect(document: ParsedDocument) {
 
 function ReaderInstance({
   document,
-  detail,
   assets = {},
   allowRemote = false,
   hideTitle = false,
   navigationTarget,
 }: ReaderContentProps) {
-  const info = useMemo(() => collect(document), [document]);
+  const { t } = useI18n();
+  const info = useMemo(() => collect(document, t), [document, t]);
   const [values, setValues] = useState(info.values);
   const [navigation, setNavigation] = useState<{
     id: string;
@@ -474,7 +505,6 @@ function ReaderInstance({
   const article = useRef<HTMLElement>(null);
   const setValue = (key: string, value: string) =>
     setValues((previous) => ({ ...previous, [key]: value }));
-  useEffect(() => setNavigation(null), [detail]);
   useEffect(() => {
     let opened: HTMLDetailsElement[] = [];
     const before = () => {
@@ -562,15 +592,21 @@ function ReaderInstance({
       if (node.name === 'variable')
         return (
           <span
+            {...sourceProps(node)}
             id={elementId(node)}
             className="learn-variable-anchor"
             aria-hidden="true"
           />
         );
       if (node.type === 'textDirective' && node.name === 'reference')
-        return <span id={node.id}>{content}</span>;
+        return (
+          <span id={node.id} {...sourceProps(node)}>
+            {content}
+          </span>
+        );
       return (
         <div
+          {...sourceProps(node)}
           className={`learn-block-wrapper learn-wrapper-${node.name}`}
           id={node.id || attr(node, 'id') || undefined}
         >
@@ -589,21 +625,26 @@ function ReaderInstance({
             child.type === 'image' ||
             (child.name && child.name !== 'reference'),
         ) ? (
-          <div className="learn-paragraph">{render(node.children)}</div>
+          <div className="learn-paragraph" {...sourceProps(node)}>
+            {render(node.children)}
+          </div>
         ) : (
-          <p>{render(node.children)}</p>
+          <p {...sourceProps(node)}>{render(node.children)}</p>
         );
       case 'heading': {
         const Tag = `h${Math.max(1, Math.min(6, node.depth ?? 2))}` as
           'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
         return (
-          <Tag id={node.id}>
+          <Tag id={node.id} {...sourceProps(node)}>
             {render(node.children)}
             {node.id && (
               <a
                 className="learn-heading-anchor print-hide"
                 href={`#${node.id}`}
-                aria-label={`Link to ${plainText(node)}`}
+                aria-label={t(
+                  `Link to ${plainText(node)}`,
+                  `Łącze do: ${plainText(node)}`,
+                )}
               >
                 #
               </a>
@@ -620,22 +661,35 @@ function ReaderInstance({
       case 'inlineCode':
         return <code className="learn-inline-code">{node.value}</code>;
       case 'code':
-        return <CodeBlock value={node.value ?? ''} language={node.lang} />;
+        return (
+          <CodeBlock
+            value={node.value ?? ''}
+            language={node.lang}
+            source={node}
+          />
+        );
       case 'math':
-        return <MathContent value={node.value ?? ''} display />;
+        return <MathContent value={node.value ?? ''} display source={node} />;
       case 'inlineMath':
         return <MathContent value={node.value ?? ''} />;
       case 'break':
         return <br />;
       case 'thematicBreak':
-        return <hr />;
+        return <hr {...sourceProps(node)} />;
       case 'blockquote':
-        return <blockquote>{render(node.children)}</blockquote>;
+        return (
+          <blockquote {...sourceProps(node)}>
+            {render(node.children)}
+          </blockquote>
+        );
       case 'list':
         return node.ordered ? (
-          <ol start={node.start}>{render(node.children)}</ol>
+          <ol start={node.start} {...sourceProps(node)}>
+            {render(node.children)}
+          </ol>
         ) : (
           <ul
+            {...sourceProps(node)}
             className={
               node.children?.some(
                 (child) =>
@@ -650,7 +704,7 @@ function ReaderInstance({
         );
       case 'listItem':
         return (
-          <li>
+          <li {...sourceProps(node)}>
             {typeof node.checked === 'boolean' && (
               <input
                 type="checkbox"
@@ -711,7 +765,10 @@ function ReaderInstance({
             <a
               href={`#fn-${node.identifier}`}
               id={`fnref-${node.identifier}`}
-              aria-label={`Footnote ${node.identifier}`}
+              aria-label={t(
+                `Footnote ${node.identifier}`,
+                `Przypis ${node.identifier}`,
+              )}
             >
               {(node.label as string) || node.identifier}
             </a>
@@ -719,10 +776,17 @@ function ReaderInstance({
         );
       case 'footnoteDefinition':
         return (
-          <aside className="learn-footnote" id={`fn-${node.identifier}`}>
+          <aside
+            className="learn-footnote"
+            id={`fn-${node.identifier}`}
+            {...sourceProps(node)}
+          >
             <span>{node.identifier}.</span>
             <div>{render(node.children)}</div>
-            <a href={`#fnref-${node.identifier}`} aria-label="Back to text">
+            <a
+              href={`#fnref-${node.identifier}`}
+              aria-label={t('Back to text', 'Wróć do tekstu')}
+            >
               ↩
             </a>
           </aside>
@@ -745,7 +809,6 @@ function ReaderInstance({
   return (
     <ReaderContext.Provider
       value={{
-        detail,
         assets,
         allowRemote,
         values,
@@ -756,19 +819,14 @@ function ReaderInstance({
         navigation,
       }}
     >
-      <article
-        ref={article}
-        className="learn-reader"
-        data-detail={detail}
-        onClickCapture={navigate}
-      >
+      <article ref={article} className="learn-reader" onClickCapture={navigate}>
         {render(contents)}
       </article>
     </ReaderContext.Provider>
   );
 }
 
-/** A source change resets ephemeral interactions, while detail changes preserve them. */
+/** A source change resets document-scoped interactions. */
 export function ReaderContent(props: ReaderContentProps) {
   return <ReaderInstance key={props.document.source} {...props} />;
 }

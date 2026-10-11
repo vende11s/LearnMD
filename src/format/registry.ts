@@ -57,13 +57,6 @@ const extraAttributes: Record<string, Record<string, AttributeSpec>> = {
   columns: {
     columns: number('Preferred number of columns; alias of count.', 1, 4),
   },
-  layer: {
-    level: choice('Associated detail level.', [
-      'concise',
-      'standard',
-      'detailed',
-    ]),
-  },
   'fill-blank': {
     caseSensitive: choice('Match letter case exactly.', ['true', 'false']),
   },
@@ -160,6 +153,60 @@ const steps = `${child('step', '$$2x + 4 = 10$$', 'title="Start"')}\n\n${child('
 const tabs = `${child('tab', 'A derivative is a local rate of change.', 'title="Intuition"')}\n\n${child('tab', '$$f\u2032(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}h$$', 'title="Definition"')}`;
 const cases = `${child('case', 'Low resistance permits a larger current for the same voltage.', 'title="Low resistance"')}\n\n${child('case', 'High resistance limits the current.', 'title="High resistance"')}`;
 const beforeAfter = `${child('before', '\u0060\u0060\u0060js\nconst result = values.map(f).map(g);\n\u0060\u0060\u0060')}\n\n${child('after', '\u0060\u0060\u0060js\nconst result = values.map(x => g(f(x)));\n\u0060\u0060\u0060')}`;
+const carouselExample = block(
+  'carousel',
+  [
+    block(
+      'slide',
+      '> **Source excerpt for this example:** If a function is differentiable at a point, it is continuous there. The converse is false.\n\nRead the statement, then work through the questions. Each slide can contain text, mathematics, diagrams, or interactive blocks.',
+      'title="Start with the source"',
+      5,
+    ),
+    block(
+      'slide',
+      block(
+        'quiz',
+        `Which implication is guaranteed by the excerpt?\n\n${child('choice', 'Differentiability implies continuity.', 'correct="true"')}\n\n${child('choice', 'Continuity implies differentiability.', 'correct="false"')}`,
+        'explanation="The statement guarantees one direction only. Its converse is explicitly false."',
+        4,
+      ),
+      'title="Read the implication"',
+      5,
+    ),
+    block(
+      'slide',
+      block(
+        'quiz',
+        `Which function is a counterexample to the converse at zero?\n\n${child('choice', '$f(x)=x^2$', 'correct="false"')}\n\n${child('choice', '$f(x)=|x|$', 'correct="true"')}`,
+        'explanation="Absolute value is continuous at zero, but its left and right derivatives differ."',
+        4,
+      ),
+      'title="Find a counterexample"',
+      5,
+    ),
+    block(
+      'slide',
+      block(
+        'question',
+        'Why is checking a function’s value at a point insufficient to establish differentiability?',
+        'answer="Differentiability concerns a limit of difference quotients near the point. A value at one point does not establish that limit."',
+      ),
+      'title="Explain the reasoning"',
+      5,
+    ),
+    block(
+      'slide',
+      block(
+        'summary',
+        'Keep the direction of an implication clear. A continuous graph can have a corner, so continuity alone does not guarantee a derivative.',
+      ),
+      'title="Take the idea with you"',
+      5,
+    ),
+  ].join('\n\n'),
+  'title="Continuity and differentiability" initial="0"',
+  6,
+);
 
 /** This registry is the source of truth for validation, the gallery, and the generation prompt. */
 export const COMPONENTS: ComponentDefinition[] = [
@@ -210,6 +257,16 @@ export const COMPONENTS: ComponentDefinition[] = [
     { initial: number('Initial zero-based tab index.', 0, 100) },
     tabs,
     { children: ['tab'] },
+  ),
+  make(
+    'carousel',
+    'Layout',
+    'A manually paginated sequence of slides containing arbitrary Markdown and interactive components. Keeps long question sets compact without autoplay.',
+    {
+      initial: number('Initial zero-based slide index. Default: 0.', 0, 19999),
+    },
+    '',
+    { children: ['slide'], example: carouselExample },
   ),
   make(
     'accordion',
@@ -327,24 +384,10 @@ export const COMPONENTS: ComponentDefinition[] = [
   make(
     'layers',
     'Progressive',
-    'Switch between named levels of explanation.',
+    'Manually switch between named explanations, such as intuitive and formal approaches.',
     { initial: number('Initial zero-based layer.', 0, 100) },
     `${child('layer', 'A matrix describes a linear transformation.', 'title="Intuition"')}\n\n${child('layer', '$$T(\\alpha u+\\beta v)=\\alpha T(u)+\\beta T(v)$$', 'title="Formal"')}`,
     { children: ['layer'] },
-  ),
-  make(
-    'detail-level',
-    'Progressive',
-    'Show content at or above a document detail threshold.',
-    {
-      level: choice(
-        'Minimum visible detail level.',
-        ['concise', 'standard', 'detailed'],
-        true,
-      ),
-    },
-    'At a corner, the left and right derivatives may disagree.',
-    { exampleAttrs: 'level="detailed"' },
   ),
   make(
     'variants',
@@ -811,6 +854,27 @@ export const COMPONENTS: ComponentDefinition[] = [
           ),
         },
       );
+    },
+  ),
+  make(
+    'slide',
+    'Structural',
+    'One carousel page. Its optional title names the page; its body can contain text, formulas, questions, quizzes, or other compatible components.',
+    {},
+    'A page can introduce an idea before the next page asks a question about it.',
+    {
+      structural: true,
+      parents: ['carousel'],
+      example: block(
+        'carousel',
+        child(
+          'slide',
+          'A page can introduce an idea before the next page asks a question about it.',
+          'title="One idea at a time"',
+        ),
+        '',
+        4,
+      ),
     },
   ),
   make(

@@ -11,6 +11,9 @@ import {
 } from '../storage';
 import { Modal } from './Modal';
 import { folderLabel } from './ImportDialog';
+import { useI18n } from '../i18n';
+import { FolderIconPicker } from './FolderIcon';
+import { normalizeFolderIcon } from '../folderIcons';
 
 export function ManageDialog({
   target,
@@ -21,6 +24,7 @@ export function ManageDialog({
   onClose,
   onRemoved,
   onError,
+  initialConfirm = false,
 }: {
   target: { type: 'note' | 'folder'; id: string } | null;
   newFolder: boolean;
@@ -30,7 +34,9 @@ export function ManageDialog({
   onClose: () => void;
   onRemoved: () => void;
   onError: (s: string) => void;
+  initialConfirm?: boolean;
 }) {
+  const { t } = useI18n();
   const isNote = target?.type === 'note';
   const note = notes.find((n) => n.id === target?.id);
   const folder = folders.find((f) => f.id === target?.id);
@@ -38,20 +44,27 @@ export function ManageDialog({
     isNote ? (note?.title ?? '') : (folder?.name ?? ''),
   );
   const [parent, setParent] = useState(
-    isNote ? (note?.folderId ?? '') : (folder?.parentId ?? folderId ?? ''),
+    isNote
+      ? (note?.folderId ?? '')
+      : folder
+        ? (folder.parentId ?? '')
+        : (folderId ?? ''),
   );
-  const [confirm, setConfirm] = useState(false);
+  const [icon, setIcon] = useState(normalizeFolderIcon(folder?.icon));
+  const [confirm, setConfirm] = useState(initialConfirm);
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState('');
   async function save() {
     setBusy(true);
     try {
-      if (!name.trim()) throw new Error('Please enter a name.');
+      if (!name.trim())
+        throw new Error(t('Please enter a name.', 'Wpisz nazwę.'));
       if (newFolder)
         await db.folders.add({
           id: crypto.randomUUID(),
           name: name.trim(),
           parentId: parent || null,
+          icon,
         });
       else if (isNote && target)
         await db.notes.update(target.id, {
@@ -61,7 +74,7 @@ export function ManageDialog({
         });
       else if (target) {
         await moveFolder(target.id, parent || null);
-        await db.folders.update(target.id, { name: name.trim() });
+        await db.folders.update(target.id, { name: name.trim(), icon });
       }
       onClose();
     } catch (e) {
@@ -88,26 +101,35 @@ export function ManageDialog({
     <Modal
       title={
         newFolder
-          ? 'A place for connected ideas'
+          ? t('A place for connected ideas', 'Miejsce na powiązane pomysły')
           : isNote
-            ? 'Manage your note'
-            : 'Manage your folder'
+            ? t('Manage your note', 'Zarządzaj notatką')
+            : t('Manage your folder', 'Zarządzaj folderem')
       }
       onClose={onClose}
     >
       <label className="field-label">
-        {isNote ? 'Display title' : 'Folder name'}
+        {isNote
+          ? t('Display title', 'Tytuł w bibliotece')
+          : t('Folder name', 'Nazwa folderu')}
         <input
-          autoFocus
+          autoFocus={!initialConfirm}
           value={name}
           maxLength={200}
           onChange={(e) => setName(e.target.value)}
         />
       </label>
+      {!isNote && (
+        <FolderIconPicker value={icon} onChange={setIcon} disabled={busy} />
+      )}
       <label className="field-label">
-        {isNote ? 'In folder' : 'Parent folder'}
+        {isNote
+          ? t('In folder', 'W folderze')
+          : t('Parent folder', 'Folder nadrzędny')}
         <select value={parent} onChange={(e) => setParent(e.target.value)}>
-          <option value="">All notes / root</option>
+          <option value="">
+            {t('All notes / root', 'Wszystkie notatki / katalog główny')}
+          </option>
           {folders
             .filter((f) => newFolder || isNote || f.id !== target?.id)
             .map((f) => (
@@ -119,7 +141,10 @@ export function ManageDialog({
       </label>
       {isNote && (
         <p className="fineprint">
-          This changes the library label. The imported source remains read-only.
+          {t(
+            'This changes the library label. The imported source remains read-only.',
+            'Zmienia to nazwę w bibliotece. Zaimportowana treść pozostaje tylko do odczytu.',
+          )}
         </p>
       )}
       {localError && (
@@ -134,7 +159,9 @@ export function ManageDialog({
               className="text-button danger"
               onClick={() => setConfirm(true)}
             >
-              Delete {isNote ? 'note' : 'folder'}
+              {isNote
+                ? t('Delete note', 'Usuń notatkę')
+                : t('Delete folder', 'Usuń folder')}
             </button>
           )}
         </div>
@@ -150,7 +177,7 @@ export function ManageDialog({
               }
             >
               <ArrowDownToLine size={15} />
-              Export source
+              {t('Export source', 'Eksportuj źródło')}
             </button>
           )}
           <button
@@ -158,33 +185,47 @@ export function ManageDialog({
             disabled={busy || !name.trim()}
             onClick={() => void save()}
           >
-            Save changes
+            {t('Save changes', 'Zapisz zmiany')}
           </button>
         </div>
       </div>
       {isNote && (
         <p className="fineprint">
-          Source export excludes bundled images. Use Settings → Export library
-          to preserve all assets.
+          {t(
+            'Source export excludes bundled images. Use Settings → Export library to preserve all assets.',
+            'Eksport źródła nie zawiera dołączonych obrazów. Aby zachować wszystkie pliki, wybierz Ustawienia → Eksportuj bibliotekę.',
+          )}
         </p>
       )}
       {confirm && (
         <div className="delete-confirm">
-          <h3>Delete this {isNote ? 'local copy' : 'folder'}?</h3>
+          <h3>
+            {isNote
+              ? t('Delete this local copy?', 'Usunąć tę lokalną kopię?')
+              : t('Delete this folder?', 'Usunąć ten folder?')}
+          </h3>
+          <p className="delete-target">{isNote ? note?.title : folder?.name}</p>
           <p>
             {isNote
-              ? 'This removes the note and its bundled images from this browser. The original file is unchanged.'
-              : 'Notes and subfolders will move into the parent folder. No notes will be deleted.'}
+              ? t(
+                  'This removes the note and its bundled images from this browser. The original file is unchanged.',
+                  'Usuwa to notatkę i dołączone obrazy z przeglądarki. Plik źródłowy pozostaje bez zmian.',
+                )
+              : t(
+                  'Notes and subfolders will move into the parent folder. No notes will be deleted.',
+                  'Notatki i podfoldery zostaną przeniesione do folderu nadrzędnego. Żadna notatka nie zostanie usunięta.',
+                )}
           </p>
           <button
             className="button danger-button"
+            autoFocus={initialConfirm}
             disabled={busy}
             onClick={() => void remove()}
           >
-            Confirm delete
+            {t('Confirm delete', 'Potwierdź usunięcie')}
           </button>
           <button className="text-button" onClick={() => setConfirm(false)}>
-            Keep it
+            {t('Keep it', 'Zachowaj')}
           </button>
         </div>
       )}

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Modal } from './Modal';
 import { parseLearnMD } from '../format/parser';
+import { useI18n } from '../i18n';
 import {
   db,
   extractSource,
@@ -33,6 +34,7 @@ export function ImportDialog({
   onClose: () => void;
   onImported: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<'paste' | 'file'>('paste');
   const [source, setSource] = useState('');
   const [validation, setValidation] = useState('');
@@ -63,25 +65,39 @@ export function ImportDialog({
     setError('');
     const all = Array.from(list);
     if (all.length > 200) {
-      setError('Import up to 200 files at a time.');
+      setError(
+        t(
+          'Import up to 200 files at a time.',
+          'Możesz importować maksymalnie 200 plików jednocześnie.',
+        ),
+      );
       return;
     }
     const md = all.filter((f) => /\.(learn\.md|md)$/i.test(f.name));
     if (!md.length) {
       setError(
-        'Select a .learn.md or .md file. Image assets can be included with folder import.',
+        t(
+          'Select a .learn.md or .md file. Image assets can be included with folder import.',
+          'Wybierz plik .learn.md lub .md. Obrazy można dołączyć podczas importowania folderu.',
+        ),
       );
       return;
     }
     if (md.some((f) => f.size > MAX_FILE_BYTES)) {
       setError(
-        'Each note must be smaller than 2 MB. Split larger documents into chapters.',
+        t(
+          'Each note must be smaller than 2 MB. Split larger documents into chapters.',
+          'Każda notatka musi być mniejsza niż 2 MB. Podziel większe dokumenty na rozdziały.',
+        ),
       );
       return;
     }
     if (all.some((f) => !/\.md$/i.test(f.name) && !safeAsset(f))) {
       setError(
-        'Unsupported assets were skipped. Supported images: PNG, JPEG, GIF, WebP, AVIF, up to 10 MB each.',
+        t(
+          'Unsupported assets were skipped. Supported images: PNG, JPEG, GIF, WebP, AVIF, up to 10 MB each.',
+          'Pominięto nieobsługiwane pliki. Obsługiwane obrazy: PNG, JPEG, GIF, WebP, AVIF, do 10 MB każdy.',
+        ),
       );
     }
     try {
@@ -97,7 +113,10 @@ export function ImportDialog({
       setTab('file');
     } catch {
       setError(
-        'A selected file could not be read. Check that it is still available, then select the files again.',
+        t(
+          'A selected file could not be read. Check that it is still available, then select the files again.',
+          'Nie można odczytać wybranego pliku. Sprawdź, czy nadal jest dostępny, i wybierz pliki ponownie.',
+        ),
       );
     }
   }
@@ -158,36 +177,56 @@ export function ImportDialog({
       setError(
         e instanceof Error
           ? e.message
-          : 'Could not save this note. Check browser storage and export a backup before clearing any data.',
+          : t(
+              'Could not save this note. Check browser storage and export a backup before clearing any data.',
+              'Nie udało się zapisać notatki. Sprawdź pamięć przeglądarki i wyeksportuj kopię przed usunięciem danych.',
+            ),
       );
     } finally {
       setBusy(false);
     }
   }
   return (
-    <Modal title="Bring an idea into your library" onClose={onClose} wide>
+    <Modal
+      title={t(
+        'Bring an idea into your library',
+        'Dodaj pomysł do swojej biblioteki',
+      )}
+      onClose={onClose}
+      wide
+    >
       <p className="muted modal-intro">
-        Import notes from anywhere. Make understanding your own.
+        {t(
+          'Import notes from anywhere. Make understanding your own.',
+          'Importuj notatki z dowolnego źródła. Ucz się po swojemu.',
+        )}
       </p>
       <div className="segmented import-tabs">
         <button
           className={tab === 'paste' ? 'selected' : ''}
           onClick={() => setTab('paste')}
         >
-          <Clipboard size={16} /> Paste source
+          <Clipboard size={16} />
+          {t('Paste source', 'Wklej źródło')}
         </button>
         <button
           className={tab === 'file' ? 'selected' : ''}
           onClick={() => setTab('file')}
         >
-          <Upload size={16} /> Import files
+          <Upload size={16} />
+          {t('Import files', 'Importuj pliki')}
         </button>
       </div>
       {tab === 'paste' ? (
         <>
           <label className="field-label" htmlFor="paste-source">
-            LearnMD source{' '}
-            <span>Markdown or a complete code-fenced document</span>
+            {t('LearnMD source', 'Źródło LearnMD')}{' '}
+            <span>
+              {t(
+                'Markdown or a complete code-fenced document',
+                'Markdown lub pełny dokument w bloku kodu',
+              )}
+            </span>
           </label>
           <textarea
             id="paste-source"
@@ -199,26 +238,39 @@ export function ImportDialog({
               setSource(e.target.value);
               setMode('');
             }}
-            placeholder={
-              '---\ntitle: Your next big idea\nversion: "1"\n---\n\n# Start with a little curiosity\n\nPaste your complete .learn.md document here…'
-            }
+            placeholder={t(
+              '---\ntitle: Your next big idea\nversion: "1"\n---\n\n# Start with a little curiosity\n\nPaste your complete .learn.md document here…',
+              '---\ntitle: Twój kolejny pomysł\nversion: "1"\n---\n\n# Zacznij od odrobiny ciekawości\n\nWklej tutaj cały dokument .learn.md…',
+            )}
           />
           {parsed && (
             <div className={`validation ${bad ? 'invalid' : ''}`}>
               <div>
                 {bad ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
                 <strong>
-                  {bad ? 'A few things need attention' : parsed.metadata.title}
+                  {bad
+                    ? t(
+                        'A few things need attention',
+                        'Kilka rzeczy wymaga poprawy',
+                      )
+                    : parsed.metadata.title}
                 </strong>
                 {!bad && (
-                  <span>{parsed.wordCount} words · ready to import</span>
+                  <span>
+                    {t(
+                      `${parsed.wordCount} words · ready to import`,
+                      `Słowa: ${parsed.wordCount} · gotowe do importu`,
+                    )}
+                  </span>
                 )}
               </div>
               {parsed.diagnostics.length > 0 && (
                 <ul>
                   {parsed.diagnostics.slice(0, 8).map((d, i) => (
                     <li key={i}>
-                      {d.line ? `Line ${d.line}: ` : ''}
+                      {d.line
+                        ? t(`Line ${d.line}: `, `Wiersz ${d.line}: `)
+                        : ''}
                       {d.message}
                     </li>
                   ))}
@@ -245,21 +297,34 @@ export function ImportDialog({
             <span className="upload-icon">
               <Upload size={28} />
             </span>
-            <h3>A new chapter starts here</h3>
-            <p>Drop your .learn.md files here, or choose them below.</p>
+            <h3>
+              {t('A new chapter starts here', 'Tu zaczyna się nowy rozdział')}
+            </h3>
+            <p>
+              {t(
+                'Drop your .learn.md files here, or choose them below.',
+                'Upuść tutaj pliki .learn.md lub wybierz je poniżej.',
+              )}
+            </p>
             <button
               className="button primary"
               onClick={() => fileInput.current?.click()}
             >
-              Choose files
+              {t('Choose files', 'Wybierz pliki')}
             </button>
             <button
               className="text-button"
               onClick={() => dirInput.current?.click()}
             >
-              <FolderOpen size={15} /> Import a folder with images
+              <FolderOpen size={15} />
+              {t('Import a folder with images', 'Importuj folder z obrazami')}
             </button>
-            <small>Everything is read and stored on this device.</small>
+            <small>
+              {t(
+                'Everything is read and stored on this device.',
+                'Wszystko jest odczytywane i zapisywane na tym urządzeniu.',
+              )}
+            </small>
           </div>
           <input
             ref={fileInput}
@@ -288,7 +353,7 @@ export function ImportDialog({
                     className={d.severity === 'error' ? 'error-text' : 'muted'}
                     key={i}
                   >
-                    {d.line ? `Line ${d.line}: ` : ''}
+                    {d.line ? t(`Line ${d.line}: `, `Wiersz ${d.line}: `) : ''}
                     {d.message}
                   </p>
                 ))}
@@ -302,19 +367,19 @@ export function ImportDialog({
           ))}
           {files.length > 0 && (
             <p className="fineprint">
-              Valid files are imported together as new copies; files with errors
-              are skipped. To replace a note, use Paste source and choose
-              Replace. Relative image paths resolve inside each document’s
-              folder.
+              {t(
+                'Valid files are imported together as new copies; files with errors are skipped. To replace a note, use Paste source and choose Replace. Relative image paths resolve inside each document’s folder.',
+                'Poprawne pliki są importowane razem jako nowe kopie; pliki z błędami są pomijane. Aby zastąpić notatkę, wybierz Wklej źródło, a następnie Zastąp. Względne ścieżki obrazów odnoszą się do folderu dokumentu.',
+              )}
             </p>
           )}
         </>
       )}
       <div className="import-options">
         <label>
-          Save to
+          {t('Save to', 'Zapisz w')}
           <select value={folder} onChange={(e) => setFolder(e.target.value)}>
-            <option value="">All notes</option>
+            <option value="">{t('All notes', 'Wszystkie notatki')}</option>
             {folders.map((f) => (
               <option key={f.id} value={f.id}>
                 {folderLabel(f, folders)}
@@ -324,7 +389,7 @@ export function ImportDialog({
         </label>
         {tab === 'paste' && (
           <label>
-            Import as
+            {t('Import as', 'Importuj jako')}
             <select
               value={mode}
               onChange={(e) => {
@@ -335,12 +400,19 @@ export function ImportDialog({
             >
               <option value="">
                 {duplicates.length
-                  ? 'Choose how to handle existing title'
-                  : 'A new local copy'}
+                  ? t(
+                      'Choose how to handle existing title',
+                      'Wybierz sposób obsługi istniejącego tytułu',
+                    )
+                  : t('A new local copy', 'Nowa lokalna kopia')}
               </option>
-              <option value="new">Create a new copy</option>
+              <option value="new">
+                {t('Create a new copy', 'Utwórz nową kopię')}
+              </option>
               {notes.length > 0 && (
-                <option value="replace">Replace an existing note…</option>
+                <option value="replace">
+                  {t('Replace an existing note…', 'Zastąp istniejącą notatkę…')}
+                </option>
               )}
             </select>
           </label>
@@ -348,7 +420,7 @@ export function ImportDialog({
       </div>
       {tab === 'paste' && mode === 'replace' && (
         <label className="field-label">
-          Replace this local copy
+          {t('Replace this local copy', 'Zastąp tę lokalną kopię')}
           <select
             value={replaceId}
             onChange={(e) => setReplaceId(e.target.value)}
@@ -360,8 +432,10 @@ export function ImportDialog({
             ))}
           </select>
           <span>
-            This replaces its source while preserving its favorite status.
-            Export the old copy first if you need it.
+            {t(
+              'This replaces its source while preserving its favorite status. Export the old copy first if you need it.',
+              'Zastępuje treść, zachowując oznaczenie jako ulubiona. W razie potrzeby najpierw wyeksportuj starą kopię.',
+            )}
           </span>
         </label>
       )}
@@ -372,7 +446,11 @@ export function ImportDialog({
       )}
       <footer className="modal-footer">
         <span>
-          <span className="status-dot" /> Private by default. Local by design.
+          <span className="status-dot" />
+          {t(
+            'Private by default. Local by design.',
+            'Prywatnie od początku. Zawsze lokalnie.',
+          )}
         </span>
         <button
           className="button primary"
@@ -392,10 +470,10 @@ export function ImportDialog({
           onClick={() => void submit()}
         >
           {busy
-            ? 'Saving…'
+            ? t('Saving…', 'Zapisywanie…')
             : tab === 'paste' && mode === 'replace'
-              ? 'Replace & open'
-              : 'Import & open'}
+              ? t('Replace & open', 'Zastąp i otwórz')
+              : t('Import & open', 'Importuj i otwórz')}
           <ArrowRight size={16} />
         </button>
       </footer>

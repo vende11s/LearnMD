@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { useI18n } from '../i18n';
 export function Modal({
   title,
   onClose,
@@ -11,6 +12,7 @@ export function Modal({
   children: ReactNode;
   wide?: boolean;
 }) {
+  const { t } = useI18n();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -32,12 +34,14 @@ export function Modal({
     >
       <header>
         <div>
-          <span className="eyebrow">YOUR LOCAL LIBRARY</span>
+          <span className="eyebrow">
+            {t('YOUR LOCAL LIBRARY', 'TWOJA LOKALNA BIBLIOTEKA')}
+          </span>
           <h2 id="modal-title">{title}</h2>
         </div>
         <button
           className="icon-button"
-          aria-label="Close dialog"
+          aria-label={t('Close dialog', 'Zamknij okno')}
           onClick={onClose}
         >
           <X size={20} />

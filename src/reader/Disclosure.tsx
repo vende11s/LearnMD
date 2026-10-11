@@ -1,3 +1,5 @@
+import { sourceProps } from './source';
+import { useI18n } from '../i18n';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import {
   ArrowLeft,
@@ -18,10 +20,10 @@ import {
   titleOf,
   useReader,
   useSelection,
-  type DetailLevel,
 } from './context';
 
 export function Progression({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const steps = named(node, ['step', 'item', 'hint']);
   const [selected, select] = useSelection(node, steps.length);
@@ -37,19 +39,24 @@ export function Progression({ node }: { node: LearnNode }) {
       aria-label={titleOf(
         node,
         node.name === 'derivation'
-          ? 'Step-by-step derivation'
-          : 'Step-by-step explanation',
+          ? t('Step-by-step derivation', 'Wyprowadzenie krok po kroku')
+          : t('Step-by-step explanation', 'Wyjaśnienie krok po kroku'),
       )}
     >
       <BlockHeading
         node={node}
-        fallback={node.name === 'derivation' ? 'Working through it' : undefined}
+        fallback={
+          node.name === 'derivation'
+            ? t('Working through it', 'Przejdźmy przez rozumowanie')
+            : undefined
+        }
       />
       {render(rest(node, ['step', 'item', 'hint']))}
       <div className="learn-step-list">
         {steps.map((step, index) => (
           <div
             id={elementId(step)}
+            {...sourceProps(step, 'structural')}
             ref={index === selected ? currentRef : undefined}
             className={`learn-step ${index === selected && !all ? 'is-current' : ''}`}
             key={index}
@@ -77,14 +84,20 @@ export function Progression({ node }: { node: LearnNode }) {
             className="learn-icon-button"
             onClick={() => reveal(selected - 1)}
             disabled={selected === 0 && !all}
-            aria-label="Previous step"
+            aria-label={t('Previous step', 'Poprzedni krok')}
           >
             <ArrowLeft size={15} />
           </button>
           <span className="learn-progress-text" aria-live="polite">
             {all
-              ? `All ${steps.length} steps`
-              : `Step ${selected + 1} of ${steps.length}`}
+              ? t(
+                  `All ${steps.length} steps`,
+                  `Wszystkie kroki: ${steps.length}`,
+                )
+              : t(
+                  `Step ${selected + 1} of ${steps.length}`,
+                  `Krok ${selected + 1} z ${steps.length}`,
+                )}
           </span>
           <button
             type="button"
@@ -92,7 +105,7 @@ export function Progression({ node }: { node: LearnNode }) {
             onClick={() => reveal(selected + 1)}
             disabled={selected >= steps.length - 1 || all}
           >
-            Next step <ArrowRight size={14} />
+            {t('Next step', 'Następny krok')} <ArrowRight size={14} />
           </button>
           <button
             type="button"
@@ -102,7 +115,9 @@ export function Progression({ node }: { node: LearnNode }) {
               if (all) select(0);
             }}
           >
-            {all ? 'Start again' : 'Show all'}
+            {all
+              ? t('Start again', 'Zacznij od nowa')
+              : t('Show all', 'Pokaż wszystko')}
           </button>
         </div>
       )}
@@ -125,22 +140,12 @@ export function Tabs({
   node: LearnNode;
   mode?: TabsMode;
 }) {
-  const { render, detail } = useReader();
+  const { t } = useI18n();
+  const { render } = useReader();
   const entries = named(node, tabChildren[mode]);
   const [selected, select] = useSelection(node, entries.length);
   const id = useId();
   const list = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (mode !== 'layers') return;
-    const matching = entries.findIndex(
-      (entry) =>
-        attr(entry, 'level') === detail ||
-        attr(entry, 'title').toLowerCase() === detail,
-    );
-    if (matching >= 0) select(matching);
-    // Global density changes choose the corresponding authored layer.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detail, mode]);
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let next: number | undefined;
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
@@ -161,7 +166,9 @@ export function Tabs({
     <section className={`learn-tabs learn-${mode}`}>
       <BlockHeading
         node={node}
-        fallback={mode === 'branch' ? 'Choose a path' : undefined}
+        fallback={
+          mode === 'branch' ? t('Choose a path', 'Wybierz ścieżkę') : undefined
+        }
       />
       {render(rest(node, tabChildren[mode]))}
       <div
@@ -170,7 +177,9 @@ export function Tabs({
         role="tablist"
         aria-label={titleOf(
           node,
-          mode === 'layers' ? 'Explanation depth' : 'Content choices',
+          mode === 'layers'
+            ? t('Explanation layers', 'Warstwy wyjaśnienia')
+            : t('Content choices', 'Warianty treści'),
         )}
       >
         {entries.map((entry, index) => (
@@ -187,7 +196,7 @@ export function Tabs({
           >
             {titleOf(
               entry,
-              `${mode === 'branch' ? 'Path' : mode === 'scenario' ? 'Scenario' : 'View'} ${index + 1}`,
+              `${mode === 'branch' ? t('Path', 'Ścieżka') : mode === 'scenario' ? t('Scenario', 'Scenariusz') : t('View', 'Wariant')} ${index + 1}`,
             )}
             {selected === index && mode === 'branch' && (
               <ArrowRight size={14} />
@@ -200,12 +209,15 @@ export function Tabs({
           className="learn-tab-panel"
           key={index}
           id={elementId(entry, `${id}-panel-${index}`)}
+          {...sourceProps(entry, 'structural')}
           role="tabpanel"
           aria-labelledby={`${id}-tab-${index}`}
           hidden={selected !== index}
           tabIndex={0}
         >
-          <h5 className="print-only">{titleOf(entry, `View ${index + 1}`)}</h5>
+          <h5 className="print-only">
+            {titleOf(entry, t(`View ${index + 1}`, `Wariant ${index + 1}`))}
+          </h5>
           {render(entry.children)}
         </div>
       ))}
@@ -214,14 +226,15 @@ export function Tabs({
 }
 
 export function Disclosure({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const name = node.name ?? 'reveal';
   const defaults: Record<string, string> = {
-    proof: 'Proof',
-    reveal: 'Reveal explanation',
-    hint: 'Show a hint',
-    popover: 'More context',
-    question: 'Think it through',
+    proof: t('Proof', 'Dowód'),
+    reveal: t('Reveal explanation', 'Pokaż wyjaśnienie'),
+    hint: t('Show a hint', 'Pokaż podpowiedź'),
+    popover: t('More context', 'Więcej kontekstu'),
+    question: t('Think it through', 'Zastanów się'),
   };
   const label = attr(node, 'label', attr(node, 'title', defaults[name]));
   const progressive = named(node, ['step']).length > 0;
@@ -243,7 +256,10 @@ export function Disclosure({ node }: { node: LearnNode }) {
           render(node.children)
         )}
         {name === 'proof' && (
-          <span className="learn-qed" aria-label="End of proof">
+          <span
+            className="learn-qed"
+            aria-label={t('End of proof', 'Koniec dowodu')}
+          >
             □
           </span>
         )}
@@ -253,13 +269,18 @@ export function Disclosure({ node }: { node: LearnNode }) {
 }
 
 export function Accordion({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   return (
     <section className="learn-accordion">
       <BlockHeading node={node} />
       {render(rest(node, ['item']))}
       {named(node, ['item']).map((item, index) => (
-        <div key={index} id={elementId(item)}>
+        <div
+          key={index}
+          id={elementId(item)}
+          {...sourceProps(item, 'structural')}
+        >
           <Disclosure
             node={{
               ...item,
@@ -267,7 +288,10 @@ export function Accordion({ node }: { node: LearnNode }) {
               attributes: {
                 open: attr(node, 'open', 'false'),
                 ...item.attributes,
-                title: titleOf(item, `Section ${index + 1}`),
+                title: titleOf(
+                  item,
+                  t(`Section ${index + 1}`, `Sekcja ${index + 1}`),
+                ),
               },
             }}
           />
@@ -278,6 +302,7 @@ export function Accordion({ node }: { node: LearnNode }) {
 }
 
 export function Annotated({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render, navigation } = useReader();
   const annotations = named(node, ['annotation']);
   const [selected, setSelected] = useState<number | null>(null);
@@ -305,7 +330,11 @@ export function Annotated({ node }: { node: LearnNode }) {
             onClick={() => setSelected(selected === index ? null : index)}
           >
             <sup>{index + 1}</sup>
-            {attr(annotation, 'label', `Annotation ${index + 1}`)}
+            {attr(
+              annotation,
+              'label',
+              t(`Annotation ${index + 1}`, `Adnotacja ${index + 1}`),
+            )}
           </button>
         ))}
       </div>
@@ -313,11 +342,16 @@ export function Annotated({ node }: { node: LearnNode }) {
         <aside
           className="learn-annotation-content"
           id={elementId(annotation, `${id}-${index}`)}
+          {...sourceProps(annotation, 'structural')}
           key={index}
           hidden={selected !== index}
         >
           <span className="learn-eyebrow">
-            {attr(annotation, 'label', `Note ${index + 1}`)}
+            {attr(
+              annotation,
+              'label',
+              t(`Note ${index + 1}`, `Uwaga ${index + 1}`),
+            )}
           </span>
           {render(annotation.children)}
         </aside>
@@ -327,6 +361,7 @@ export function Annotated({ node }: { node: LearnNode }) {
 }
 
 export function Spotlight({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const items = named(node, ['item', 'region']);
   const [active, setActive] = useSelection(node, items.length);
@@ -340,6 +375,7 @@ export function Spotlight({ node }: { node: LearnNode }) {
         {items.map((item, index) => (
           <div
             id={elementId(item)}
+            {...sourceProps(item, 'structural')}
             className={`learn-spotlight-area ${!clear && active !== index ? 'is-dimmed' : ''}`}
             key={index}
           >
@@ -351,7 +387,7 @@ export function Spotlight({ node }: { node: LearnNode }) {
                 setClear(false);
               }}
             >
-              {titleOf(item, `Focus ${index + 1}`)}
+              {titleOf(item, t(`Focus ${index + 1}`, `Fragment ${index + 1}`))}
               {!clear && active === index && <Check size={14} />}
             </button>
             {render(item.children)}
@@ -364,25 +400,10 @@ export function Spotlight({ node }: { node: LearnNode }) {
           className="learn-text-button print-hide"
           onClick={() => setClear(true)}
         >
-          <RotateCcw size={13} /> Clear focus
+          <RotateCcw size={13} />{' '}
+          {t('Clear focus', 'Pokaż wszystkie fragmenty')}{' '}
         </button>
       )}
     </section>
-  );
-}
-
-export function Detail({ node }: { node: LearnNode }) {
-  const { detail, render, navigation } = useReader();
-  const ranks = { concise: 0, standard: 1, detailed: 2 };
-  const requested = attr(node, 'level', 'standard') as DetailLevel;
-  const referenced = navigation && hasAnchor(node, navigation.id);
-  return (
-    <div
-      className="learn-detail"
-      data-detail={requested}
-      hidden={!referenced && ranks[detail] < (ranks[requested] ?? 1)}
-    >
-      {render(node.children)}
-    </div>
   );
 }

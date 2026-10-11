@@ -142,13 +142,13 @@ $$
 For positive $\beta$, the damping force opposes motion and removes mechanical energy. Weak damping leads to oscillations with a decaying envelope. Strong enough damping can prevent oscillation altogether.
 
 ::::layers{title="Three levels of the model"}
-:::layer{title="Ideal oscillation" level="concise"}
+:::layer{title="Ideal oscillation"}
 Ignore losses and use small angles. The motion is sinusoidal, and the amplitude remains constant.
 :::
-:::layer{title="Weak damping" level="standard"}
+:::layer{title="Weak damping"}
 Include a modest velocity-dependent resistance. For $0<\beta<\omega_0$, the angular displacement has the form $Ae^{-\beta t}\cos(\omega_dt+\phi)$, where $\omega_d=\sqrt{\omega_0^2-\beta^2}$.
 :::
-:::layer{title="The limits of the model" level="detailed"}
+:::layer{title="The limits of the model"}
 Air resistance need not be exactly proportional to velocity. Large angles require the sine term. Flexible supports and extended bobs introduce additional dynamics. A refined model should address the dominant source of error in the question being asked, rather than adding complexity indiscriminately.
 :::
 ::::

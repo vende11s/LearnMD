@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { offlineBuild } from './scripts/offline';
 export default defineConfig({
+  // Relative assets support both localhost and GitHub Pages project paths.
+  base: './',
   plugins: [react(), offlineBuild()],
   build: {
     rollupOptions: {

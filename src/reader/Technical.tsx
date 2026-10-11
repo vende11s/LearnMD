@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import { useEffect, useId, useMemo, useState } from 'react';
 import katex from 'katex';
 import hljs from 'highlight.js/lib/common';
@@ -11,6 +12,7 @@ import {
   Play,
 } from 'lucide-react';
 import type { LearnNode } from '../format/types';
+import { sourceProps } from './source';
 import {
   assetSource,
   attr,
@@ -31,14 +33,22 @@ import {
 export function MathContent({
   value,
   display = false,
+  source,
 }: {
   value: string;
   display?: boolean;
+  source?: LearnNode;
 }) {
+  const { t } = useI18n();
   const { copy, copied, error } = useCopy();
   const output = useMemo(() => {
     if (value.length > 20000)
-      return { error: 'This expression exceeds the safe rendering limit.' };
+      return {
+        error: t(
+          'This expression exceeds the safe rendering limit.',
+          'To wyrażenie przekracza bezpieczny limit renderowania.',
+        ),
+      };
     try {
       return {
         html: katex.renderToString(value, {
@@ -52,12 +62,21 @@ export function MathContent({
         }),
       };
     } catch {
-      return { error: 'This LaTeX expression could not be rendered.' };
+      return {
+        error: t(
+          'This LaTeX expression could not be rendered.',
+          'Nie udało się wyrenderować tego wyrażenia LaTeX.',
+        ),
+      };
     }
-  }, [value, display]);
+  }, [value, display, t]);
   if (output.error)
     return (
-      <span className="learn-math-error" title={output.error}>
+      <span
+        className="learn-math-error"
+        title={output.error}
+        {...sourceProps(source)}
+      >
         <code>{value}</code>
         <span className="learn-sr-only">{output.error}</span>
       </span>
@@ -71,7 +90,7 @@ export function MathContent({
       />
     );
   return (
-    <div className="learn-math-display">
+    <div className="learn-math-display" {...sourceProps(source)}>
       <div
         className="learn-math-scroll"
         dangerouslySetInnerHTML={{ __html: output.html! }}
@@ -80,13 +99,20 @@ export function MathContent({
         type="button"
         className="learn-copy-math print-hide"
         onClick={() => copy(value)}
-        aria-label={copied ? 'LaTeX copied' : 'Copy LaTeX'}
+        aria-label={
+          copied
+            ? t('LaTeX copied', 'Skopiowano LaTeX')
+            : t('Copy LaTeX', 'Kopiuj LaTeX')
+        }
         title={
           error
-            ? 'Could not copy. Select the expression instead.'
+            ? t(
+                'Could not copy. Select the expression instead.',
+                'Nie udało się skopiować. Zaznacz wyrażenie ręcznie.',
+              )
             : copied
-              ? 'Copied'
-              : 'Copy LaTeX'
+              ? t('Copied', 'Skopiowano')
+              : t('Copy LaTeX', 'Kopiuj LaTeX')
         }
       >
         {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -110,13 +136,16 @@ export function CodeBlock({
   activeLines,
   changedLines,
   change,
+  source,
 }: {
   value: string;
   language?: string;
   activeLines?: Set<number>;
   changedLines?: Set<number>;
   change?: 'added' | 'removed';
+  source?: LearnNode;
 }) {
+  const { t } = useI18n();
   const { copy, copied, error } = useCopy();
   const html = useMemo(() => highlight(value, language), [value, language]);
   const lines = value.replace(/\n$/, '').split('\n');
@@ -128,17 +157,21 @@ export function CodeBlock({
     [value, language, Boolean(activeLines), Boolean(changedLines)],
   );
   return (
-    <div className="learn-code-block">
+    <div className="learn-code-block" {...sourceProps(source)}>
       <div className="learn-code-header">
-        <span>{language || 'text'}</span>
+        <span>{language || t('text', 'tekst')}</span>
         <button
           type="button"
           className="learn-text-button print-hide"
           onClick={() => copy(value)}
-          aria-label="Copy code"
+          aria-label={t('Copy code', 'Kopiuj kod')}
         >
           {copied ? <Check size={13} /> : <Copy size={13} />}
-          {error ? 'Copy unavailable' : copied ? 'Copied' : 'Copy'}
+          {error
+            ? t('Copy unavailable', 'Kopiowanie niedostępne')
+            : copied
+              ? t('Copied', 'Skopiowano')
+              : t('Copy', 'Kopiuj')}
         </button>
       </div>
       <pre tabIndex={0}>
@@ -175,6 +208,7 @@ export function CodeBlock({
 }
 
 export function Formula({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render, numbers } = useReader();
   const label = attr(
     node,
@@ -210,7 +244,7 @@ export function Formula({ node }: { node: LearnNode }) {
         {node.name === 'formula' && (
           <span
             className="learn-equation-number"
-            aria-label={`Equation ${label}`}
+            aria-label={t(`Equation ${label}`, `Równanie ${label}`)}
           >
             ({label})
           </span>
@@ -253,6 +287,7 @@ function parseLines(value: string, total: number) {
   return lines;
 }
 export function CodeWalkthrough({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const source = node.children?.find((child) => child.type === 'code');
   const steps = named(node, ['step']);
@@ -261,7 +296,13 @@ export function CodeWalkthrough({ node }: { node: LearnNode }) {
   const value = source?.value ?? '';
   return (
     <section className="learn-code-walkthrough">
-      <BlockHeading node={node} fallback="Read the code, one idea at a time" />
+      <BlockHeading
+        node={node}
+        fallback={t(
+          'Read the code, one idea at a time',
+          'Przeanalizuj kod krok po kroku',
+        )}
+      />
       {render(
         (node.children ?? []).filter(
           (child) => child.type !== 'code' && child.name !== 'step',
@@ -285,8 +326,10 @@ export function CodeWalkthrough({ node }: { node: LearnNode }) {
             onClick={() => select(index)}
           >
             <span>{index + 1}</span>
-            {titleOf(step, `Step ${index + 1}`)}
-            <small>Lines {attr(step, 'lines', '—')}</small>
+            {titleOf(step, t(`Step ${index + 1}`, `Krok ${index + 1}`))}
+            <small>
+              {t('Lines', 'Wiersze')} {attr(step, 'lines', '—')}
+            </small>
           </button>
         ))}
       </div>
@@ -295,6 +338,7 @@ export function CodeWalkthrough({ node }: { node: LearnNode }) {
           className="learn-walkthrough-explanation"
           key={index}
           id={elementId(step)}
+          {...sourceProps(step, 'structural')}
           hidden={selected !== index}
         >
           {render(step.children)}
@@ -343,6 +387,7 @@ function lineChanges(before: string, after: string) {
   return { removed, added };
 }
 export function CodeDiff({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render } = useReader();
   const before = named(node, ['before'])[0],
     after = named(node, ['after'])[0];
@@ -359,7 +404,7 @@ export function CodeDiff({ node }: { node: LearnNode }) {
       <div className="learn-diff-columns">
         <div id={before ? elementId(before) : undefined}>
           <h5>
-            Before <span>−{changes.removed.size}</span>
+            {t('Before', 'Przed')} <span>−{changes.removed.size}</span>
           </h5>
           {first && (
             <CodeBlock
@@ -373,7 +418,7 @@ export function CodeDiff({ node }: { node: LearnNode }) {
         </div>
         <div id={after ? elementId(after) : undefined}>
           <h5>
-            After <span>+{changes.added.size}</span>
+            {t('After', 'Po')} <span>+{changes.added.size}</span>
           </h5>
           {second && (
             <CodeBlock
@@ -420,7 +465,7 @@ export function MarkdownTable({
     ? (node.align as ('left' | 'center' | 'right' | null)[])
     : [];
   return (
-    <div className="learn-table-scroll" tabIndex={0}>
+    <div className="learn-table-scroll" tabIndex={0} {...sourceProps(node)}>
       <table>
         <thead>
           <tr>
@@ -509,6 +554,7 @@ export function DataTable({ node }: { node: LearnNode }) {
 }
 
 export function Glossary({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render, navigation } = useReader();
   const [query, setQuery] = useState('');
   const terms = named(node, ['term', 'symbol']);
@@ -523,16 +569,22 @@ export function Glossary({ node }: { node: LearnNode }) {
   const id = useId();
   return (
     <section className="learn-glossary">
-      <BlockHeading node={node} fallback="Symbols & notation" />
+      <BlockHeading
+        node={node}
+        fallback={t('Symbols & notation', 'Symbole i oznaczenia')}
+      />
       {render(rest(node, ['term', 'symbol']))}
       {terms.length > 3 && (
         <div className="learn-glossary-search print-hide">
           <label className="learn-sr-only" htmlFor={id}>
-            Filter symbols
+            {t('Filter symbols', 'Filtruj symbole')}{' '}
           </label>
           <input
             id={id}
-            placeholder="Find a symbol or meaning…"
+            placeholder={t(
+              'Find a symbol or meaning…',
+              'Znajdź symbol lub znaczenie…',
+            )}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -540,7 +592,11 @@ export function Glossary({ node }: { node: LearnNode }) {
       )}
       <dl>
         {filtered.map((term, index) => (
-          <div key={index} id={elementId(term)}>
+          <div
+            key={index}
+            id={elementId(term)}
+            {...sourceProps(term, 'structural')}
+          >
             <dt>
               {attr(term, 'symbol').startsWith('$') ? (
                 <MathContent
@@ -557,12 +613,17 @@ export function Glossary({ node }: { node: LearnNode }) {
           </div>
         ))}
       </dl>
-      {!filtered.length && <p className="learn-empty">No matching symbols.</p>}
+      {!filtered.length && (
+        <p className="learn-empty">
+          {t('No matching symbols.', 'Brak pasujących symboli.')}{' '}
+        </p>
+      )}
     </section>
   );
 }
 
 export function Reference({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { references } = useReader();
   const target = attr(node, 'target');
   const reference = references.get(target);
@@ -579,14 +640,19 @@ export function Reference({ node }: { node: LearnNode }) {
   ) : (
     <span
       className="learn-missing-reference"
-      title={`No heading or component has the ID “${target}”.`}
+      title={t(
+        `No heading or component has the ID “${target}”.`,
+        `Żaden nagłówek ani komponent nie ma identyfikatora „${target}”.`,
+      )}
     >
-      {label} <small>(reference unavailable)</small>
+      {label}{' '}
+      <small>{t('(reference unavailable)', '(odwołanie niedostępne)')} </small>
     </span>
   );
 }
 
 export function Embed({ node }: { node: LearnNode }) {
+  const { t } = useI18n();
   const { render, assets } = useReader();
   const [loaded, setLoaded] = useState(false);
   const src = attr(node, 'src');
@@ -601,11 +667,17 @@ export function Embed({ node }: { node: LearnNode }) {
       {['audio', 'video'].includes(kind) && source ? (
         kind === 'audio' ? (
           <audio controls preload="none" src={source}>
-            Audio playback is not supported in this browser.
+            {t(
+              'Audio playback is not supported in this browser.',
+              'Ta przeglądarka nie obsługuje odtwarzania dźwięku.',
+            )}{' '}
           </audio>
         ) : (
           <video controls preload="none" src={source}>
-            Video playback is not supported in this browser.
+            {t(
+              'Video playback is not supported in this browser.',
+              'Ta przeglądarka nie obsługuje odtwarzania wideo.',
+            )}{' '}
           </video>
         )
       ) : ['audio', 'video'].includes(kind) && /^https:\/\//i.test(src) ? (
@@ -615,7 +687,10 @@ export function Embed({ node }: { node: LearnNode }) {
           onClick={() => setLoaded(true)}
         >
           <Play size={18} />
-          Load external {kind}
+          {t(
+            `Load external ${kind}`,
+            `Wczytaj zewnętrzne ${kind === 'audio' ? 'nagranie audio' : 'wideo'}`,
+          )}
           <span>
             {attr(
               node,
@@ -639,15 +714,17 @@ export function Embed({ node }: { node: LearnNode }) {
         >
           <ExternalLink size={17} />
           <span>
-            {attr(node, 'label', 'Open resource')}
+            {attr(node, 'label', t('Open resource', 'Otwórz materiał'))}
             <small>{new URL(url).hostname || url}</small>
           </span>
           <ArrowRight size={16} />
         </a>
       ) : (
         <p className="learn-empty">
-          This resource URL is not supported. Use an HTTPS link or a bundled
-          media asset.
+          {t(
+            'This resource URL is not supported. Use an HTTPS link or a bundled media asset.',
+            'Ten adres materiału nie jest obsługiwany. Użyj łącza HTTPS lub dołączonego pliku multimedialnego.',
+          )}
         </p>
       )}
     </section>

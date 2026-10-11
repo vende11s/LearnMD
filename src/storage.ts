@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { parseLearnMD, extractLearnMDSource } from './format/parser';
+import { isFolderIcon, type FolderIconId } from './folderIcons';
 
 export interface Note {
   id: string;
@@ -20,6 +21,7 @@ export interface Folder {
   id: string;
   name: string;
   parentId: string | null;
+  icon?: FolderIconId;
 }
 export interface Asset {
   id: string;
@@ -280,6 +282,10 @@ export async function restoreLibrary(text: string, database = db) {
       folderIds.has(f.id)
     )
       throw new Error('Invalid or duplicate folder.');
+    // Missing icons are valid in older v1 backups. Explicit unknown IDs are
+    // rejected before writing, so a restore never silently changes an icon.
+    if (f.icon !== undefined && !isFolderIcon(f.icon))
+      throw new Error('Backup contains an unsupported folder icon.');
     folderIds.set(f.id, crypto.randomUUID());
   }
   const foldersById = new Map<string, Folder>(
@@ -349,6 +355,7 @@ export async function restoreLibrary(text: string, database = db) {
           id: folderIds.get(f.id)!,
           name: f.name,
           parentId: f.parentId ? folderIds.get(f.parentId)! : null,
+          ...(f.icon !== undefined ? { icon: f.icon } : {}),
         })),
       );
       await database.notes.bulkAdd(

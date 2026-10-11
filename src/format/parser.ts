@@ -52,6 +52,7 @@ const navigation = new Set([
   'steps',
   'derivation',
   'tabs',
+  'carousel',
   'layers',
   'variants',
   'spotlight',
@@ -446,7 +447,6 @@ export function parseLearnMD(input: string): ParsedDocument {
         if (node.name && node.type.endsWith('Directive')) {
           const directiveLine = lineOf(node);
           if (directiveLine) parsedDirectiveLines.add(directiveLine);
-          const component = COMPONENT_MAP.get(node.name);
           // remark uses null for bare shorthand attributes. Normalize without trusting prototypes.
           node.attributes = Object.fromEntries(
             Object.entries(node.attributes ?? {}).map(([key, value]) => [
@@ -455,6 +455,25 @@ export function parseLearnMD(input: string): ParsedDocument {
             ]),
           );
           const attrs = node.attributes;
+          // Compatibility only: old density annotations must never hide imported
+          // content. They are not registered authoring features or reader state.
+          if (node.name === 'detail-level') {
+            node.name = 'section';
+            delete attrs.level;
+            diagnose(
+              node,
+              'An obsolete detail-level wrapper is displayed as an ordinary section. All of its content remains available.',
+              'warning',
+            );
+          } else if (node.name === 'layer' && Object.hasOwn(attrs, 'level')) {
+            delete attrs.level;
+            diagnose(
+              node,
+              'An obsolete layer.level attribute was ignored. Layers are selected manually.',
+              'warning',
+            );
+          }
+          const component = COMPONENT_MAP.get(node.name);
           if (!component)
             diagnose(
               node,

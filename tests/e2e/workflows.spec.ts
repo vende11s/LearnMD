@@ -27,7 +27,7 @@ ${ending}
 :::
 ::::
 
-:::detail-level{level="detailed"}
+:::section{title="A closer look"}
 An additional detail for careful readers.
 :::
 
@@ -120,14 +120,9 @@ test('copy prompt → validate paste → read, interact, and reload the local co
   await expect(argument.getByText('Start with the premise.')).toBeVisible();
   await argument.getByRole('button', { name: 'Next step' }).click();
   await expect(argument.getByText('The original conclusion.')).toBeVisible();
-  await page.getByRole('button', { name: 'Detailed', exact: true }).click();
   await expect(
     page.getByText('An additional detail for careful readers.'),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Concise', exact: true }).click();
-  await expect(
-    page.getByText('An additional detail for careful readers.'),
-  ).not.toBeVisible();
   await page.getByRole('radio', { name: 'The local note' }).check();
   await page.getByRole('button', { name: 'Check answer', exact: true }).click();
   await expect(page.getByText('That’s right.')).toBeVisible();
@@ -182,9 +177,6 @@ test('copy prompt → validate paste → read, interact, and reload the local co
   await expect(
     page.getByRole('button', { name: 'Remove from favorites', exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Concise', exact: true }),
-  ).toHaveAttribute('aria-pressed', 'true');
   await expect
     .poll(() =>
       page.locator('main.workspace').evaluate((element) => element.scrollTop),
@@ -472,7 +464,7 @@ test('every public component opens in the live gallery without renderer or math 
   const names = COMPONENTS.filter((component) => !component.structural).map(
     (component) => component.name,
   );
-  expect(names.length).toBeGreaterThanOrEqual(65);
+  expect(names).toHaveLength(65);
   const index = page.locator('.component-index');
   for (const name of names) {
     await index.getByRole('button', { name, exact: true }).click();

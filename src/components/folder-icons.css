@@ -1,0 +1,116 @@
+.folder-icon-picker {
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.folder-icon-picker > legend {
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.folder-icon-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.folder-icon-preview-glyph {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  width: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--accent);
+  background: var(--tint);
+}
+.folder-icon-preview > div {
+  display: grid;
+  gap: 3px;
+}
+.folder-icon-preview > div > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.folder-icon-preview strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+.folder-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 440px;
+}
+.folder-icon-option {
+  position: relative;
+  cursor: pointer;
+  min-width: 0;
+}
+.folder-icon-option > input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+.folder-icon-choice {
+  pointer-events: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 42px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface);
+}
+.folder-icon-option:hover .folder-icon-choice {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.folder-icon-option > input:checked + .folder-icon-choice {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--tint);
+}
+.folder-icon-option > input:focus-visible + .folder-icon-choice {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.folder-icon-option > input:disabled + .folder-icon-choice {
+  opacity: 0.5;
+  cursor: default;
+}
+.folder-icon-check {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+}
+.folder-link > svg[data-folder-icon],
+.subfolders svg[data-folder-icon],
+.note-card-footer svg[data-folder-icon] {
+  flex-shrink: 0;
+}
+@media (max-width: 430px) {
+  .folder-icon-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .folder-icon-choice {
+    height: 40px;
+  }
+  .folder-icon-choice > svg:first-child {
+    width: 18px;
+    height: 18px;
+  }
+}

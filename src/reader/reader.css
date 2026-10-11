@@ -1828,3 +1828,110 @@ html.dark .learn-reader,
   max-width: 100%;
   margin: 18px auto;
 }
+
+/* A carousel keeps long practice sequences readable while retaining slide state. */
+.learn-carousel {
+  border: 1px solid var(--learn-line);
+  border-radius: 7px;
+  padding: 22px;
+  scroll-margin-top: 100px;
+}
+.learn-carousel-position {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--learn-line);
+  font: 11px/1.6 var(--learn-ui);
+  color: var(--learn-muted);
+}
+.learn-carousel-position > span:first-child {
+  color: var(--learn-accent);
+  font-weight: 600;
+}
+.learn-carousel-position select {
+  flex: 1;
+  max-width: 260px;
+  min-width: 135px !important;
+  padding: 6px 9px !important;
+  font-size: 11px !important;
+}
+.learn-carousel-keyboard-hint {
+  margin-left: auto;
+  font-size: 10px;
+}
+.learn-carousel-slide {
+  padding: 22px 0;
+  min-height: 125px;
+}
+.learn-carousel-slide > .learn-block-heading h4 {
+  font-size: 17px;
+}
+.learn-carousel-navigation {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--learn-line);
+  padding-top: 16px;
+}
+.learn-carousel-progress {
+  flex: 1;
+  height: 2px;
+  background: var(--learn-line);
+  overflow: hidden;
+  border-radius: 2px;
+}
+.learn-carousel-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--learn-accent);
+}
+.learn-reader .learn-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--learn-paper);
+  border: 1px solid var(--learn-line);
+  border-radius: 5px;
+  padding: 8px 12px;
+  color: var(--learn-ink);
+  font: 500 12px/1.45 var(--learn-ui);
+}
+.learn-reader .learn-secondary-button:not(:disabled):hover {
+  background: var(--learn-surface);
+}
+@container (max-width: 480px) {
+  .learn-carousel {
+    padding: 16px;
+  }
+  .learn-carousel-position {
+    gap: 8px;
+  }
+  .learn-carousel-keyboard-hint {
+    display: none;
+  }
+  .learn-carousel-navigation {
+    gap: 9px;
+  }
+  .learn-carousel-navigation button {
+    font-size: 11px !important;
+    padding: 8px !important;
+  }
+  .learn-carousel-progress {
+    min-width: 12px;
+  }
+}
+@media print {
+  .learn-reader .learn-carousel {
+    padding: 0;
+    border: 0;
+  }
+  .learn-reader .learn-carousel-slide {
+    display: block !important;
+    min-height: 0;
+    border-bottom: 1px solid var(--learn-line);
+    padding: 18px 0;
+  }
+}

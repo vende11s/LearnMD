@@ -33,7 +33,10 @@ export default defineConfig({
     {
       name: 'offline-chromium',
       testMatch: '**/offline.spec.ts',
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4173' },
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://127.0.0.1:4173/LearnMD/',
+      },
     },
   ],
   webServer: [
@@ -44,8 +47,9 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-      url: 'http://127.0.0.1:4173',
+      command:
+        'npm run build && npm run preview -- --port 4173 --strictPort --base /LearnMD/',
+      url: 'http://127.0.0.1:4173/LearnMD/',
       reuseExistingServer: true,
       timeout: 90_000,
     },

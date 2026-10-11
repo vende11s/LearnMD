@@ -132,7 +132,7 @@ An HTTP response such as a server error indicates that an application-level exch
 :::
 ::::
 
-:::detail-level{level="detailed" title="Encrypted does not mean invisible"}
+:::section{title="Encrypted does not mean invisible"}
 TLS protects application content between its endpoints, but observers may still learn metadata such as IP addresses, timing, and traffic volume. A system's privacy properties depend on more than encryption alone. The endpoint receiving plaintext remains part of the trust boundary.
 :::
 

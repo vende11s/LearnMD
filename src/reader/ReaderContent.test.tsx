@@ -10,13 +10,10 @@ function document(body: string) {
     `---\ntitle: Reader test\nversion: "1.0"\n---\n\n${body}`,
   );
 }
-function mount(
-  body: string,
-  detail: 'concise' | 'standard' | 'detailed' = 'standard',
-) {
+function mount(body: string) {
   const parsed = document(body);
   return {
-    ...render(<ReaderContent document={parsed} detail={detail} />),
+    ...render(<ReaderContent document={parsed} />),
     parsed,
   };
 }
@@ -103,20 +100,33 @@ describe('published renderer contract', () => {
     expect(screen.getByText('Expanded initially')).toBeVisible();
   });
 
-  it('changes global density without resetting exercise state, and uses the corresponding layer', async () => {
+  it('keeps layers under manual control and preserves exercise answers when switching', async () => {
     const user = userEvent.setup();
     const parsed = document(
-      `${child('detail-level', 'Detailed assumptions', 'level="detailed"')}\n\n${group('layers', `${child('layer', 'Short version', 'title="Concise" level="concise"')}\n\n${child('layer', 'Full version', 'title="Detailed" level="detailed"')}`)}\n\n${group('quiz', `${child('choice', 'The true statement', 'correct="true"')}\n\n${child('choice', 'The false statement', 'correct="false"')}`)}`,
+      `${group('layers', `${child('layer', 'Geometric explanation', 'title="Intuition"')}\n\n${child('layer', 'Algebraic explanation', 'title="Formal"')}`)}\n\n${group('quiz', `${child('choice', 'The true statement', 'correct="true"')}\n\n${child('choice', 'The false statement', 'correct="false"')}`)}`,
     );
-    const { rerender } = render(
-      <ReaderContent document={parsed} detail="concise" />,
-    );
-    expect(screen.getByText('Detailed assumptions')).not.toBeVisible();
+    const { rerender } = render(<ReaderContent document={parsed} />);
+    expect(screen.getByText('Geometric explanation')).toBeVisible();
+    expect(screen.getByText('Algebraic explanation')).not.toBeVisible();
     await user.click(screen.getByLabelText('The true statement'));
-    rerender(<ReaderContent document={parsed} detail="detailed" />);
-    expect(screen.getByText('Detailed assumptions')).toBeVisible();
-    expect(screen.getByText('Full version')).toBeVisible();
+    await user.click(screen.getByRole('tab', { name: 'Formal' }));
+    expect(screen.getByText('Algebraic explanation')).toBeVisible();
+    expect(screen.getByText('Geometric explanation')).not.toBeVisible();
+    rerender(<ReaderContent document={parsed} />);
+    expect(screen.getByText('Algebraic explanation')).toBeVisible();
     expect(screen.getByLabelText('The true statement')).toBeChecked();
+  });
+
+  it('renders legacy explanation wrappers as visible ordinary sections', () => {
+    mount(
+      child(
+        'detail-level',
+        'Previously hidden assumptions',
+        'level="detailed" title="Assumptions"',
+      ),
+    );
+    expect(screen.getByText('Previously hidden assumptions')).toBeVisible();
+    expect(screen.getByText('Assumptions')).toBeVisible();
   });
 
   it('shares explicitly declared state and resets interactions for a different document', async () => {
@@ -127,10 +137,7 @@ describe('published renderer contract', () => {
     await user.click(screen.getByRole('switch', { name: 'Show assumptions' }));
     expect(screen.getByText('Assume continuity')).toBeVisible();
     rerender(
-      <ReaderContent
-        document={document(`${source}\n\nDifferent note.`)}
-        detail="standard"
-      />,
+      <ReaderContent document={document(`${source}\n\nDifferent note.`)} />,
     );
     expect(
       screen.getByRole('switch', { name: 'Show assumptions' }),

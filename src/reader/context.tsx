@@ -7,9 +7,7 @@ import {
 } from 'react';
 import type { LearnNode } from '../format/types';
 
-export type DetailLevel = 'concise' | 'standard' | 'detailed';
 export type ReaderContextValue = {
-  detail: DetailLevel;
   assets: Record<string, string>;
   allowRemote: boolean;
   values: Record<string, string>;
@@ -52,6 +50,7 @@ export function useSelection(node: LearnNode, count: number, initial = 0) {
     if (!navigation) return;
     const entries = named(node, [
       'step',
+      'slide',
       'item',
       'tab',
       'variant',
@@ -105,11 +104,6 @@ export const hasAnchor = (node: LearnNode, id: string): boolean =>
     node.name !== 'participant' &&
     attr(node, 'id') === id) ||
   Boolean(node.children?.some((child) => hasAnchor(child, id)));
-export const levelRank: Record<DetailLevel, number> = {
-  concise: 0,
-  standard: 1,
-  detailed: 2,
-};
 
 /** Only explicit safe protocols and local document anchors become links. */
 export function safeLink(value: string | undefined): string | undefined {

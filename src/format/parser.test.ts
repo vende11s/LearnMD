@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { COMPONENTS, PUBLIC_COMPONENTS } from './registry';
-import { extractLearnMDSource, LIMITS, parseLearnMD, safeUrl } from './parser';
-import { buildGenerationPrompt } from './prompt';
+import { COMPONENTS, COMPONENT_MAP, PUBLIC_COMPONENTS } from './registry';
+import {
+  extractLearnMDSource,
+  LIMITS,
+  parseLearnMD,
+  safeUrl,
+  textContent,
+} from './parser';
+import { buildFormatReference, buildGenerationPrompt } from './prompt';
 
 const errors = (source: string) =>
   parseLearnMD(source).diagnostics.filter((item) => item.severity === 'error');
@@ -102,8 +108,8 @@ describe('LearnMD grammar', () => {
 describe('component and metadata schemas', () => {
   it('validates required attributes, enums, ranges, unknown properties, and child relationships', () => {
     expect(
-      errors(':::detail-level{level="extra"}\nText\n:::')[0].message,
-    ).toContain('level');
+      errors(':::stack{direction="diagonal"}\nText\n:::')[0].message,
+    ).toContain('direction');
     expect(errors(':::fill-blank\nComplete this.\n:::')[0].message).toContain(
       'answer',
     );
@@ -228,6 +234,84 @@ describe('semantic references and shared state', () => {
   });
 });
 
+describe('carousel layout', () => {
+  it('keeps rich question, source-context, and summary content inside slides', () => {
+    const example = COMPONENTS.find(
+      (component) => component.name === 'carousel',
+    )!;
+    const document = parseLearnMD(example.example);
+    expect(document.diagnostics).toEqual([]);
+    const carousel = document.children[0];
+    expect(carousel.name).toBe('carousel');
+    expect(carousel.attributes?.initial).toBe('0');
+    const slides =
+      carousel.children?.filter((node) => node.name === 'slide') ?? [];
+    expect(slides).toHaveLength(5);
+    expect(slides[0].children?.some((node) => node.type === 'blockquote')).toBe(
+      true,
+    );
+    expect(slides[1].children?.[0].name).toBe('quiz');
+    expect(slides[2].children?.[0].name).toBe('quiz');
+    expect(slides[3].children?.[0].name).toBe('question');
+    expect(slides[4].children?.[0].name).toBe('summary');
+  });
+
+  it('requires slide children, accepts optional slide titles, and validates its properties', () => {
+    expect(errors(':::carousel\n:::')[0].message).toContain(
+      'at least one slide',
+    );
+    expect(errors(':::slide\nOrphan\n:::')[0].message).toContain(
+      'direct child of carousel',
+    );
+    expect(
+      errors('::::carousel\n:::slide\nAn untitled page.\n:::\n::::'),
+    ).toEqual([]);
+    expect(
+      errors('::::carousel{initial="1.5"}\n:::slide\nText\n:::\n::::')[0]
+        .message,
+    ).toContain('integer');
+    expect(
+      errors('::::carousel{autoplay="true"}\n:::slide\nText\n:::\n::::')[0]
+        .message,
+    ).toContain('Unrecognized');
+    expect(
+      errors(
+        '::::carousel\n:::question{answer="Two"}\nOne plus one?\n:::\n::::',
+      ).some((error) =>
+        error.message.includes('accepts these direct child blocks: slide'),
+      ),
+    ).toBe(true);
+  });
+
+  it('supports long question sets without a small fixed slide-count limit', () => {
+    const slides = Array.from(
+      { length: 150 },
+      (_, index) =>
+        `:::slide{title="Question ${index + 1}"}\nExplain concept ${index + 1}.\n:::`,
+    ).join('\n\n');
+    const document = parseLearnMD(
+      `::::carousel{initial="149"}\n${slides}\n::::`,
+    );
+    expect(document.diagnostics).toEqual([]);
+    expect(
+      document.children[0].children?.filter((node) => node.name === 'slide'),
+    ).toHaveLength(150);
+  });
+
+  it('resolves semantic references to slides and includes carousels in sync validation', () => {
+    const referenced =
+      '::::carousel\n:::slide{id="reasoning"}\nExplain the implication.\n:::\n::::\n\n:::reference{target="reasoning"}\n:::';
+    expect(errors(referenced)).toEqual([]);
+    const synced =
+      ':::::sync{group="lesson"}\n::::carousel\n:::slide\nFirst\n:::\n:::slide\nSecond\n:::\n::::\n::::steps\n:::step\nOnly one\n:::\n::::\n:::::';
+    expect(
+      parseLearnMD(synced).diagnostics.some((item) =>
+        item.message.includes('different numbers of items'),
+      ),
+    ).toBe(true);
+  });
+});
+
 describe('untrusted-source handling', () => {
   it('strips HTML and dangerous links while preserving safe text', () => {
     const doc = parseLearnMD(
@@ -303,6 +387,74 @@ describe('untrusted-source handling', () => {
   });
 });
 
+describe('compatibility with retired density annotations', () => {
+  it.each(['concise', 'standard', 'detailed'])(
+    'preserves all content from an old %s wrapper as an ordinary section',
+    (level) => {
+      const source = `::::detail-level{level="${level}" id="legacy-section" title="Keep this explanation"}\n## Retained heading\n\n:::theorem{id="retained-theorem"}\nThe statement and its $x^2$ notation remain available.\n:::\n::::\n\n:::reference{target="legacy-section"}\n:::`;
+      const document = parseLearnMD(source);
+      expect(
+        document.diagnostics.filter((item) => item.severity === 'error'),
+      ).toEqual([]);
+      expect(document.diagnostics).toEqual([
+        expect.objectContaining({ severity: 'warning', line: 1 }),
+      ]);
+      const section = document.children[0];
+      expect(section.name).toBe('section');
+      expect(section.id).toBe('legacy-section');
+      expect(section.attributes).toEqual({
+        id: 'legacy-section',
+        title: 'Keep this explanation',
+      });
+      expect(section.children?.map((node) => node.name ?? node.type)).toEqual([
+        'heading',
+        'theorem',
+      ]);
+      expect(textContent(section)).toContain(
+        'The statement and its x^2 notation remain available.',
+      );
+      expect(document.headings[0].text).toBe('Retained heading');
+      expect(document.source).toBe(source);
+    },
+  );
+
+  it('keeps old layers as manual alternatives while discarding their retired level attribute', () => {
+    const document = parseLearnMD(
+      '::::layers\n:::layer{title="Overview" level="concise"}\nThe central idea.\n:::\n:::layer{title="Proof" level="detailed"}\nThe complete argument.\n:::\n::::',
+    );
+    expect(
+      document.diagnostics.filter((item) => item.severity === 'error'),
+    ).toEqual([]);
+    expect(
+      document.diagnostics.filter((item) => item.severity === 'warning'),
+    ).toHaveLength(2);
+    const layers = document.children[0];
+    expect(layers.name).toBe('layers');
+    expect(layers.children?.map((node) => node.attributes)).toEqual([
+      { title: 'Overview' },
+      { title: 'Proof' },
+    ]);
+    expect(textContent(layers)).toContain('The central idea.');
+    expect(textContent(layers)).toContain('The complete argument.');
+    expect(
+      COMPONENT_MAP.get('layer')!.schema.safeParse({ level: 'detailed' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('does not expose retired density authoring in the registry, generation prompt, or format reference', () => {
+    expect(COMPONENT_MAP.has('detail-level')).toBe(false);
+    expect(COMPONENT_MAP.get('layer')!.properties).not.toHaveProperty('level');
+    for (const document of [buildGenerationPrompt(), buildFormatReference()]) {
+      expect(document).not.toContain('detail-level');
+      expect(document).not.toContain('concise-mode');
+      expect(document).not.toContain('Concise, Standard, and Detailed');
+      expect(document).not.toContain('Associated detail level');
+      expect(document).toContain('Manually switch between named explanations');
+    }
+  });
+});
+
 describe('generation prompt consistency', () => {
   it('includes at least 65 public components and all registered attributes and examples', () => {
     expect(PUBLIC_COMPONENTS.length).toBeGreaterThanOrEqual(65);
@@ -326,5 +478,16 @@ describe('generation prompt consistency', () => {
       'GENERATION STYLE: Rigorous',
     );
     expect(buildGenerationPrompt('unknown')).toBe(buildGenerationPrompt());
+  });
+
+  it('instructs source-language output prominently while describing carousel authoring in English', () => {
+    const prompt = buildGenerationPrompt();
+    expect(prompt.slice(0, 1000)).toContain(
+      'OUTPUT LANGUAGE: Write the notes in the language of the supplied materials unless the user explicitly requests a different language.',
+    );
+    expect(prompt).toContain('CAROUSELS AND LONG QUESTION SETS');
+    expect(prompt).toContain('no fixed slide-count cap');
+    expect(prompt).toContain('ordinary Markdown blockquote syntax');
+    expect(prompt).toContain('never invent source text or citations');
   });
 });

@@ -35,8 +35,8 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react';
-import { db, importNote, exportLibrary, download } from './storage';
-import { SAMPLES } from './content/samples';
+import { db, exportLibrary, download } from './storage';
+import { initializeLibrary } from './librarySetup';
 import { buildGenerationPrompt } from './format/prompt';
 import { ImportDialog } from './components/ImportDialog';
 import { ManageDialog } from './components/ManageDialog';
@@ -46,9 +46,11 @@ import { ReaderView } from './pages/ReaderView';
 import { Showcase } from './pages/Showcase';
 import { SettingsPage } from './pages/SettingsPage';
 import { useStored } from './hooks/useStored';
-type Detail = 'concise' | 'standard' | 'detailed';
+import { I18nProvider, useI18n } from './i18n';
+import { PUBLIC_COMPONENTS } from './format/registry';
 
 function AppInner() {
+  const { t } = useI18n();
   const [route, setRoute] = useState(
     () => decodeURI(location.hash.slice(1)) || 'library',
   );
@@ -57,7 +59,6 @@ function AppInner() {
     'learnmd-theme',
     'light',
   );
-  const [detail, setDetail] = useStored<Detail>('learnmd-detail', 'standard');
   const [sort, setSort] = useStored('learnmd-sort', 'recent');
   const [remote, setRemote] = useStored('learnmd-remote', false);
   const [sidebar, setSidebar] = useState(false);
@@ -67,6 +68,7 @@ function AppInner() {
   const [manage, setManage] = useState<{
     type: 'note' | 'folder';
     id: string;
+    confirmDelete?: boolean;
   } | null>(null);
   const [newFolder, setNewFolder] = useState(false);
   const [error, setError] = useState('');
@@ -95,58 +97,43 @@ function AppInner() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
-  const run = useCallback(async (action: () => Promise<unknown>) => {
-    try {
-      await action();
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : 'The operation failed. Your existing library has been kept.',
-      );
-    }
-  }, []);
+  const run = useCallback(
+    async (action: () => Promise<unknown>) => {
+      try {
+        await action();
+      } catch (e) {
+        setError(
+          e instanceof Error
+            ? e.message
+            : t(
+                'The operation failed. Your existing library has been kept.',
+                'Operacja nie powiodła się. Twoja biblioteka została zachowana.',
+              ),
+        );
+      }
+    },
+    [t],
+  );
   useEffect(() => {
     let live = true;
     void (async () => {
       try {
-        await db.transaction(
-          'rw',
-          db.notes,
-          db.folders,
-          db.assets,
-          db.settings,
-          async () => {
-            if (await db.settings.get('initialized')) return;
-            const subjects = [
-              'Mathematics',
-              'Computer science',
-              'Natural sciences',
-              'Humanities',
-            ];
-            await db.folders.bulkPut(
-              subjects.map((name, i) => ({
-                id: `sample-folder-${i}`,
-                name,
-                parentId: null,
-              })),
-            );
-            for (let i = 0; i < SAMPLES.length; i++) {
-              const sample = SAMPLES[i];
-              await importNote(
-                sample.source,
-                `sample-folder-${i < 2 ? 0 : i < 4 ? 1 : i === 4 ? 2 : 3}`,
-                { sample: true, id: sample.id },
-              );
-            }
-            await db.settings.put({ key: 'initialized', value: 'true' });
-          },
-        );
+        await initializeLibrary();
+        const currentPath = decodeURI(location.hash.slice(1));
+        if (
+          live &&
+          currentPath.startsWith('folder/') &&
+          !(await db.folders.get(currentPath.slice(7)))
+        )
+          navigate('library');
         if (live) setReady(true);
       } catch (e) {
         if (live) {
           setError(
-            `Could not open local storage: ${e instanceof Error ? e.message : 'unknown error'}. Check whether your browser allows storage for this site.`,
+            t(
+              `Could not open local storage: ${e instanceof Error ? e.message : 'unknown error'}. Check whether your browser allows storage for this site.`,
+              `Nie można otworzyć pamięci lokalnej: ${e instanceof Error ? e.message : 'nieznany błąd'}. Sprawdź, czy przeglądarka pozwala tej stronie zapisywać dane.`,
+            ),
           );
           setReady(true);
         }
@@ -182,18 +169,19 @@ function AppInner() {
   const pageName = note
     ? note.title
     : route === 'generate'
-      ? 'Generate notes'
+      ? t('Generate notes', 'Generuj notatki')
       : route === 'showcase'
-        ? 'Component guide'
+        ? t('Component guide', 'Komponenty')
         : route === 'settings'
-          ? 'Settings'
+          ? t('Settings', 'Ustawienia')
           : route === 'favorites'
-            ? 'Favorites'
+            ? t('Favorites', 'Ulubione')
             : route === 'recent'
-              ? 'Recently opened'
+              ? t('Recently opened', 'Ostatnio otwierane')
               : folderId
-                ? (folders.find((f) => f.id === folderId)?.name ?? 'Folder')
-                : 'All notes';
+                ? (folders.find((f) => f.id === folderId)?.name ??
+                  t('Folder', 'Folder'))
+                : t('All notes', 'Wszystkie notatki');
   async function openNote(id: string) {
     await run(async () => {
       await db.notes.update(id, { openedAt: Date.now() });
@@ -207,7 +195,10 @@ function AppInner() {
       setTimeout(() => setCopied(false), 2500);
     } catch {
       setError(
-        'Clipboard access is unavailable. Select and copy the prompt below.',
+        t(
+          'Clipboard access is unavailable. Select and copy the prompt below.',
+          'Schowek jest niedostępny. Zaznacz i skopiuj prompt poniżej.',
+        ),
       );
     }
   }
@@ -224,12 +215,12 @@ function AppInner() {
           main.current?.focus();
         }}
       >
-        Skip to content
+        {t('Skip to content', 'Przejdź do treści')}
       </a>
       {sidebar && (
         <button
           className="sidebar-scrim"
-          aria-label="Close navigation"
+          aria-label={t('Close navigation', 'Zamknij nawigację')}
           onClick={() => setSidebar(false)}
         />
       )}
@@ -247,14 +238,18 @@ function AppInner() {
           </span>
           <span>
             Learn<span className="brand-md">MD</span>
-            <small>A LITTLE MORE UNDERSTANDING</small>
+            <small>
+              {t('A LITTLE MORE UNDERSTANDING', 'ODROBINĘ WIĘCEJ ZROZUMIENIA')}
+            </small>
           </span>
         </a>
         <button
           className="button primary add-note"
           onClick={() => setImporting(true)}
         >
-          <Plus size={18} /> Add note <span>＋</span>
+          <Plus size={18} />
+          {t('Add note', 'Dodaj notatkę')}
+          <span>＋</span>
         </button>
         <div className="search-box">
           <Search size={16} />
@@ -271,45 +266,55 @@ function AppInner() {
                 setRoute('library');
               }
             }}
-            placeholder="Search your notes"
-            aria-label="Search notes"
+            placeholder={t('Search your notes', 'Szukaj w notatkach')}
+            aria-label={t('Search notes', 'Szukaj notatek')}
           />
           <kbd>⌘ K</kbd>
         </div>
-        <nav aria-label="Main navigation">
+        <nav aria-label={t('Main navigation', 'Nawigacja główna')}>
           <button
             className={route === 'library' ? 'nav-item active' : 'nav-item'}
             onClick={() => navigate('library')}
           >
             <Library size={18} />
-            All notes<span>{notes.length}</span>
+            {t('All notes', 'Wszystkie notatki')}
+            <span>{notes.length}</span>
           </button>
           <button
             className={route === 'recent' ? 'nav-item active' : 'nav-item'}
             onClick={() => navigate('recent')}
           >
             <Clock3 size={18} />
-            Recently opened
+            {t('Recently opened', 'Ostatnio otwierane')}
           </button>
           <button
             className={route === 'favorites' ? 'nav-item active' : 'nav-item'}
             onClick={() => navigate('favorites')}
           >
             <Star size={18} />
-            Favorites{countFavorites > 0 && <span>{countFavorites}</span>}
+            {t('Favorites', 'Ulubione')}
+            {countFavorites > 0 && <span>{countFavorites}</span>}
           </button>
         </nav>
         <div className="sidebar-label">
-          YOUR FOLDERS
+          {t('YOUR FOLDERS', 'TWOJE FOLDERY')}
           <button
             className="icon-button"
-            aria-label="Create folder"
+            aria-label={t('Create folder', 'Utwórz folder')}
             onClick={() => setNewFolder(true)}
           >
             <Plus size={15} />
           </button>
         </div>
-        <nav className="folder-nav" aria-label="Folders">
+        <nav className="folder-nav" aria-label={t('Folders', 'Foldery')}>
+          {ready && folders.length === 0 && (
+            <button
+              className="folder-empty-action"
+              onClick={() => setNewFolder(true)}
+            >
+              {t('Create your first folder', 'Utwórz pierwszy folder')}
+            </button>
+          )}
           {folders
             .filter((f) => f.parentId === null)
             .sort((a, b) => a.name.localeCompare(b.name))
@@ -325,14 +330,16 @@ function AppInner() {
               />
             ))}
         </nav>
-        <div className="sidebar-label resources-label">WORKSPACE</div>
-        <nav aria-label="Resources">
+        <div className="sidebar-label resources-label">
+          {t('WORKSPACE', 'PRZESTRZEŃ ROBOCZA')}
+        </div>
+        <nav aria-label={t('Resources', 'Narzędzia')}>
           <button
             className={route === 'generate' ? 'nav-item active' : 'nav-item'}
             onClick={() => navigate('generate')}
           >
             <Sparkles size={18} />
-            Generate notes
+            {t('Generate notes', 'Generuj notatki')}
             <ArrowRight size={14} />
           </button>
           <button
@@ -340,7 +347,8 @@ function AppInner() {
             onClick={() => navigate('showcase')}
           >
             <Grid2X2 size={18} />
-            Component guide<span className="tiny-pill">65</span>
+            {t('Component guide', 'Komponenty')}
+            <span className="tiny-pill">{PUBLIC_COMPONENTS.length}</span>
           </button>
         </nav>
         <div className="sidebar-bottom">
@@ -349,8 +357,13 @@ function AppInner() {
               <HardDrive size={17} />
             </span>
             <div>
-              Yours. On this device.
-              <small>No account. Just your curiosity.</small>
+              {t('Yours. On this device.', 'Twoje. Na tym urządzeniu.')}
+              <small>
+                {t(
+                  'No account. Just your curiosity.',
+                  'Bez konta. Wystarczy ciekawość.',
+                )}
+              </small>
             </div>
             <span className="status-dot" />
           </div>
@@ -359,11 +372,16 @@ function AppInner() {
               className="text-button"
               onClick={() => navigate('settings')}
             >
-              <Settings2 size={16} /> Settings
+              <Settings2 size={16} />
+              {t('Settings', 'Ustawienia')}
             </button>
             <button
               className="icon-button"
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+              aria-label={
+                theme === 'light'
+                  ? t('Switch to dark theme', 'Włącz ciemny motyw')
+                  : t('Switch to light theme', 'Włącz jasny motyw')
+              }
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             >
               {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
@@ -376,7 +394,7 @@ function AppInner() {
           <div className="breadcrumbs">
             <button
               className="icon-button mobile-menu"
-              aria-label="Open navigation"
+              aria-label={t('Open navigation', 'Otwórz nawigację')}
               onClick={() => setSidebar(true)}
             >
               <Menu size={19} />
@@ -384,13 +402,15 @@ function AppInner() {
             {focus && (
               <button
                 className="icon-button"
-                aria-label="Exit focus mode"
+                aria-label={t('Exit focus mode', 'Wyłącz tryb skupienia')}
                 onClick={() => setFocus(false)}
               >
                 <PanelLeftClose size={18} />
               </button>
             )}
-            <span className="breadcrumb-root">Your workspace</span>
+            <span className="breadcrumb-root">
+              {t('Your workspace', 'Twoja przestrzeń')}
+            </span>
             <ChevronRight size={13} />
             <span>{pageName}</span>
           </div>
@@ -400,7 +420,9 @@ function AppInner() {
                 <button
                   className={`icon-button ${note.favorite ? 'is-favorite' : ''}`}
                   aria-label={
-                    note.favorite ? 'Remove from favorites' : 'Add to favorites'
+                    note.favorite
+                      ? t('Remove from favorites', 'Usuń z ulubionych')
+                      : t('Add to favorites', 'Dodaj do ulubionych')
                   }
                   onClick={() =>
                     void run(() =>
@@ -415,21 +437,28 @@ function AppInner() {
                 </button>
                 <button
                   className="icon-button"
-                  aria-label={focus ? 'Exit focus mode' : 'Enter focus mode'}
+                  aria-label={
+                    focus
+                      ? t('Exit focus mode', 'Wyłącz tryb skupienia')
+                      : t('Enter focus mode', 'Włącz tryb skupienia')
+                  }
                   onClick={() => setFocus(!focus)}
                 >
                   {focus ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
                 </button>
                 <button
                   className="icon-button"
-                  aria-label="Toggle document outline"
+                  aria-label={t(
+                    'Toggle document outline',
+                    'Pokaż lub ukryj spis treści',
+                  )}
                   onClick={() => setOutline(!outline)}
                 >
                   <List size={18} />
                 </button>
                 <button
                   className="icon-button"
-                  aria-label="Manage note"
+                  aria-label={t('Manage note', 'Zarządzaj notatką')}
                   onClick={() => setManage({ type: 'note', id: note.id })}
                 >
                   <MoreHorizontal size={20} />
@@ -437,7 +466,8 @@ function AppInner() {
               </>
             ) : (
               <span className="local-badge">
-                <ShieldCheck size={14} /> LOCAL WORKSPACE
+                <ShieldCheck size={14} />
+                {t('LOCAL WORKSPACE', 'LOKALNA PRZESTRZEŃ')}
               </span>
             )}
           </div>
@@ -447,7 +477,7 @@ function AppInner() {
             <span>{error}</span>
             <button
               className="icon-button"
-              aria-label="Dismiss error"
+              aria-label={t('Dismiss error', 'Zamknij komunikat')}
               onClick={() => setError('')}
             >
               <X size={17} />
@@ -456,13 +486,13 @@ function AppInner() {
         )}
         <main className="workspace" id="main-content" ref={main} tabIndex={-1}>
           {!ready ? (
-            <div className="loading">Opening your library…</div>
+            <div className="loading">
+              {t('Opening your library…', 'Otwieranie biblioteki…')}
+            </div>
           ) : note ? (
             <ReaderView
               key={note.id}
               note={note}
-              detail={detail}
-              setDetail={setDetail}
               outline={outline && !focus}
               allowRemote={remote}
               mainRef={main}
@@ -471,51 +501,72 @@ function AppInner() {
           ) : noteId ? (
             <div className="empty-state">
               <BookOpen size={36} />
-              <h1>That note is no longer here.</h1>
+              <h1>
+                {t(
+                  'That note is no longer here.',
+                  'Tej notatki już tutaj nie ma.',
+                )}
+              </h1>
               <button
                 className="button primary"
                 onClick={() => navigate('library')}
               >
-                Return to your library
+                {t('Return to your library', 'Wróć do biblioteki')}
               </button>
             </div>
           ) : route === 'generate' ? (
             <div className="page generate-page">
-              <div className="eyebrow">FROM INFORMATION TO UNDERSTANDING</div>
+              <div className="eyebrow">
+                {t(
+                  'FROM INFORMATION TO UNDERSTANDING',
+                  'OD INFORMACJI DO ZROZUMIENIA',
+                )}
+              </div>
               <h1>
-                Better notes.
+                {t('Better notes.', 'Lepsze notatki.')}
                 <br />
-                <em>Deeper understanding.</em>
+                <em>{t('Deeper understanding.', 'Głębsze zrozumienie.')}</em>
               </h1>
               <p className="page-description">
-                Your materials, your favorite AI, a more thoughtful way to
-                learn.
+                {t(
+                  'Your materials, your favorite AI, a more thoughtful way to learn.',
+                  'Twoje materiały, ulubione AI i nauka ze zrozumieniem.',
+                )}
                 <br />
-                One prompt is all you need to get started.
+                {t(
+                  'One prompt is all you need to get started.',
+                  'Na początek wystarczy jeden prompt.',
+                )}
               </p>
               <div className="generation-steps">
                 <div>
                   <span>01</span>
-                  <h3>Copy the prompt</h3>
+                  <h3>{t('Copy the prompt', 'Skopiuj prompt')}</h3>
                   <p>
-                    It teaches your AI the LearnMD format and how to write
-                    genuinely useful notes.
+                    {t(
+                      'It teaches your AI the LearnMD format and how to write genuinely useful notes.',
+                      'Wyjaśnia AI format LearnMD i zasady tworzenia przydatnych notatek.',
+                    )}
                   </p>
                 </div>
                 <div>
                   <span>02</span>
-                  <h3>Bring your materials</h3>
+                  <h3>{t('Bring your materials', 'Dodaj swoje materiały')}</h3>
                   <p>
-                    Paste it into ChatGPT, Claude, or any LLM with your slides,
-                    chapters, or source notes.
+                    {t(
+                      'Paste it into ChatGPT, Claude, or any LLM with your slides, chapters, or source notes.',
+                      'Wklej go do ChatGPT, Claude lub innego modelu wraz ze slajdami, rozdziałami lub notatkami źródłowymi.',
+                    )}
                   </p>
                 </div>
                 <div>
                   <span>03</span>
-                  <h3>Make yourself at home</h3>
+                  <h3>{t('Make yourself at home', 'Rozgość się')}</h3>
                   <p>
-                    Import the generated .learn.md file, or paste its source
-                    directly into your library.
+                    {t(
+                      'Import the generated .learn.md file, or paste its source directly into your library.',
+                      'Zaimportuj wygenerowany plik .learn.md albo wklej jego treść bezpośrednio do biblioteki.',
+                    )}
                   </p>
                 </div>
               </div>
@@ -524,10 +575,17 @@ function AppInner() {
                   <div>
                     <Sparkles size={20} />
                     <div>
-                      <h3>The LearnMD generation prompt</h3>
+                      <h3>
+                        {t(
+                          'The LearnMD generation prompt',
+                          'Prompt do generowania notatek LearnMD',
+                        )}
+                      </h3>
                       <p>
-                        Complete format reference · 65 components · teaching
-                        guidance
+                        {t(
+                          `Complete format reference · ${PUBLIC_COMPONENTS.length} components · teaching guidance`,
+                          `Pełny opis formatu · ${PUBLIC_COMPONENTS.length} elementów · wskazówki dydaktyczne`,
+                        )}
                       </p>
                     </div>
                   </div>
@@ -536,12 +594,15 @@ function AppInner() {
                     onClick={() => void copyPrompt()}
                   >
                     {copied ? <Check size={16} /> : <Copy size={16} />}{' '}
-                    {copied ? 'Copied to clipboard' : 'Copy prompt'}
+                    {copied
+                      ? t('Copied to clipboard', 'Skopiowano do schowka')
+                      : t('Copy prompt', 'Kopiuj prompt')}
                   </button>
                 </div>
                 <details className="prompt-preview">
                   <summary>
-                    Read the complete prompt <ChevronDown size={16} />
+                    {t('Read the complete prompt', 'Przeczytaj cały prompt')}
+                    <ChevronDown size={16} />
                   </summary>
                   <pre tabIndex={0}>{buildGenerationPrompt()}</pre>
                 </details>
@@ -549,11 +610,17 @@ function AppInner() {
               <div className="privacy-note">
                 <ShieldCheck size={21} />
                 <div>
-                  <h3>Choose where your materials go.</h3>
+                  <h3>
+                    {t(
+                      'Choose where your materials go.',
+                      'Ty decydujesz, dokąd trafiają materiały.',
+                    )}
+                  </h3>
                   <p>
-                    LearnMD makes no AI calls. You decide which provider
-                    receives your materials. Imported notes stay in this
-                    browser.
+                    {t(
+                      'LearnMD makes no AI calls. You decide which provider receives your materials. Imported notes stay in this browser.',
+                      'LearnMD nie wysyła zapytań do AI. Ty wybierasz dostawcę, któremu udostępniasz materiały. Zaimportowane notatki pozostają w tej przeglądarce.',
+                    )}
                   </p>
                 </div>
               </div>
@@ -561,19 +628,21 @@ function AppInner() {
                 className="text-button"
                 onClick={() => setImporting(true)}
               >
-                Already have your notes? Import them <ArrowRight size={16} />
+                {t(
+                  'Already have your notes? Import them',
+                  'Masz już notatki? Zaimportuj je',
+                )}
+                <ArrowRight size={16} />
               </button>
             </div>
           ) : route === 'showcase' ? (
-            <Showcase detail={detail} setDetail={setDetail} />
+            <Showcase />
           ) : route === 'settings' ? (
             <SettingsPage
               theme={theme}
               setTheme={setTheme}
               remote={remote}
               setRemote={setRemote}
-              detail={detail}
-              setDetail={setDetail}
               onError={setError}
               onToast={setToast}
               noteCount={notes.length}
@@ -590,6 +659,9 @@ function AppInner() {
               openNote={(id) => void openNote(id)}
               onImport={() => setImporting(true)}
               onManage={(id) => setManage({ type: 'note', id })}
+              onDelete={(id) =>
+                setManage({ type: 'note', id, confirmDelete: true })
+              }
               onFavorite={(n) =>
                 void run(() => db.notes.update(n.id, { favorite: !n.favorite }))
               }
@@ -614,12 +686,18 @@ function AppInner() {
           onImported={(id) => {
             setImporting(false);
             navigate(`note/${id}`);
-            setToast('Your note is at home in the library.');
+            setToast(
+              t(
+                'Your note is at home in the library.',
+                'Notatka jest już w Twojej bibliotece.',
+              ),
+            );
           }}
         />
       )}
       {(manage || newFolder) && (
         <ManageDialog
+          initialConfirm={manage?.confirmDelete}
           target={manage}
           newFolder={newFolder}
           folderId={folderId}
@@ -650,34 +728,52 @@ class AppBoundary extends Component<
   }
   render() {
     return this.state.error ? (
-      <div className="fatal-error">
-        <BookOpen size={40} />
-        <h1>Something interrupted the page.</h1>
-        <p>Your stored library has not been deleted.</p>
-        <pre>{this.state.error}</pre>
-        <button className="button primary" onClick={() => location.reload()}>
-          Reload LearnMD
-        </button>
-        <button
-          className="button secondary"
-          onClick={() =>
-            void exportLibrary().then((data) =>
-              download(data, 'learnmd-recovery.json'),
-            )
-          }
-        >
-          Export recovery backup
-        </button>
-      </div>
+      <FailureScreen error={this.state.error} />
     ) : (
       this.props.children
     );
   }
 }
+function FailureScreen({ error }: { error: string }) {
+  const { t } = useI18n();
+  return (
+    <div className="fatal-error">
+      <BookOpen size={40} />
+      <h1>
+        {t(
+          'Something interrupted the page.',
+          'Coś przerwało wyświetlanie strony.',
+        )}
+      </h1>
+      <p>
+        {t(
+          'Your stored library has not been deleted.',
+          'Zapisana biblioteka nie została usunięta.',
+        )}
+      </p>
+      <pre>{error}</pre>
+      <button className="button primary" onClick={() => location.reload()}>
+        {t('Reload LearnMD', 'Odśwież LearnMD')}
+      </button>
+      <button
+        className="button secondary"
+        onClick={() =>
+          void exportLibrary().then((data) =>
+            download(data, 'learnmd-recovery.json'),
+          )
+        }
+      >
+        {t('Export recovery backup', 'Eksportuj kopię ratunkową')}
+      </button>
+    </div>
+  );
+}
 export default function App() {
   return (
-    <AppBoundary>
-      <AppInner />
-    </AppBoundary>
+    <I18nProvider>
+      <AppBoundary>
+        <AppInner />
+      </AppBoundary>
+    </I18nProvider>
   );
 }

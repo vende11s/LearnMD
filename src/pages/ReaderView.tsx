@@ -1,30 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Bookmark, Printer, SlidersHorizontal } from 'lucide-react';
+import { BookOpen, Bookmark, Printer } from 'lucide-react';
 import { db, type Note } from '../storage';
 import { parseLearnMD } from '../format/parser';
 import { ReaderContent } from '../reader/ReaderContent';
-import type { DetailLevel as Detail } from '../reader/context';
-import { DetailControl } from '../components/DetailControl';
+import {
+  CopyDocumentSource,
+  CopySelectionSource,
+} from '../components/SourceActions';
+import { useI18n } from '../i18n';
+import { sourceProps } from '../reader/source';
 
 export function ReaderView({
   note,
-  detail,
-  setDetail,
   outline,
   allowRemote,
   mainRef,
   onError,
 }: {
   note: Note;
-  detail: Detail;
-  setDetail: (d: Detail) => void;
   outline: boolean;
   allowRemote: boolean;
   mainRef: React.RefObject<HTMLElement | null>;
   onError: (s: string) => void;
 }) {
+  const { t } = useI18n();
   const parsed = useMemo(() => parseLearnMD(note.source), [note.source]);
   const document = parsed;
+  const contentRef = useRef<HTMLDivElement>(null);
   const [assets, setAssets] = useState<Record<string, string>>({});
   const [active, setActive] = useState('');
   const [navigationTarget, setNavigationTarget] = useState<{
@@ -65,7 +67,9 @@ export function ReaderView({
       void db.notes
         .update(note.id, { position: progress.current })
         .catch((e) =>
-          onError(`Reading position could not be saved: ${String(e)}`),
+          onError(
+            `${t('Reading position could not be saved', 'Nie udało się zapisać miejsca w notatce')}: ${String(e)}`,
+          ),
         );
     };
     const scroll = () => {
@@ -94,15 +98,26 @@ export function ReaderView({
   }, [note.id]);
   return (
     <div className={`reader-layout ${outline ? 'with-outline' : ''}`}>
-      <div className="reader-column">
+      <div className="reader-column" ref={contentRef}>
         <div className="reader-prelude">
           <span className="eyebrow">{note.subject}</span>
           <div className="read-meta">
-            {Math.max(1, Math.ceil(parsed.wordCount / 220))} MIN READ{' '}
-            <span>·</span> {note.sample ? 'EXAMPLE NOTE' : 'LOCAL COPY'}
+            {Math.max(1, Math.ceil(parsed.wordCount / 220))}{' '}
+            {t('MIN READ', 'MIN CZYTANIA')} <span>·</span>{' '}
+            {note.sample
+              ? t('EXAMPLE NOTE', 'PRZYKŁADOWA NOTATKA')
+              : t('LOCAL COPY', 'KOPIA LOKALNA')}
           </div>
         </div>
         <h1
+          {...(parsed.children[0]?.type === 'heading' &&
+          parsed.children[0]?.depth === 1
+            ? sourceProps(parsed.children[0])
+            : {
+                'data-source-start': 0,
+                'data-source-end': parsed.source.length,
+                'data-source-kind': 'metadata',
+              })}
           className="document-title"
           id={
             parsed.children[0]?.type === 'heading' &&
@@ -114,20 +129,21 @@ export function ReaderView({
           {note.title}
         </h1>
         {note.description && (
-          <p className="document-description">{note.description}</p>
+          <p
+            className="document-description"
+            data-source-start={0}
+            data-source-end={parsed.source.length}
+            data-source-kind="metadata"
+          >
+            {note.description}
+          </p>
         )}
-        <div className="reader-settings">
-          <div>
-            <SlidersHorizontal size={15} />
-            <span>Level of detail</span>
-          </div>
-          <DetailControl detail={detail} setDetail={setDetail} />
-        </div>
+        <CopyDocumentSource source={note.source} />
         {parsed.diagnostics.length > 0 && (
           <details className="reader-diagnostics">
             <summary>
-              {parsed.diagnostics.length} format{' '}
-              {parsed.diagnostics.length === 1 ? 'notice' : 'notices'}
+              {t('Format notices', 'Uwagi do formatu')}:{' '}
+              {parsed.diagnostics.length}
             </summary>
             {parsed.diagnostics.map((d, i) => (
               <p key={i}>{d.message}</p>
@@ -136,7 +152,6 @@ export function ReaderView({
         )}
         <ReaderContent
           document={document}
-          detail={detail}
           assets={assets}
           allowRemote={allowRemote}
           hideTitle
@@ -144,21 +159,23 @@ export function ReaderView({
         />
         <footer className="reader-end">
           <BookOpen size={22} />
-          <span>A little more understanding.</span>
+          <span>
+            {t('A little more understanding.', 'Kolejny krok do zrozumienia.')}
+          </span>
           <button
             className="text-button"
             onClick={() =>
               mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
             }
           >
-            Back to the beginning ↑
+            {t('Back to the beginning ↑', 'Wróć na początek ↑')}
           </button>
         </footer>
       </div>
       {outline && (
         <aside className="document-outline">
-          <span className="eyebrow">IN THIS NOTE</span>
-          <nav aria-label="Document outline">
+          <span className="eyebrow">{t('IN THIS NOTE', 'W TEJ NOTATCE')}</span>
+          <nav aria-label={t('Document outline', 'Spis treści')}>
             {headings.map((h) => (
               <button
                 key={h.id}
@@ -176,16 +193,18 @@ export function ReaderView({
           <div className="outline-bottom">
             <Bookmark size={16} />
             <p>
-              Your place is saved
-              <br />
-              as you read.
+              {t(
+                'Your place is saved as you read.',
+                'Miejsce w notatce zapisuje się podczas czytania.',
+              )}
             </p>
           </div>
           <button className="text-button" onClick={() => window.print()}>
-            <Printer size={15} /> Print note
+            <Printer size={15} /> {t('Print note', 'Drukuj notatkę')}
           </button>
         </aside>
       )}
+      <CopySelectionSource rootRef={contentRef} source={parsed.source} />
     </div>
   );
 }

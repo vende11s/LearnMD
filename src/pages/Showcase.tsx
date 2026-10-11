@@ -2,32 +2,54 @@ import { FormatDiagnosticsDemo } from '../components/FormatDiagnosticsDemo';
 import { useMemo, useState } from 'react';
 import { ChevronRight, Search } from 'lucide-react';
 import { COMPONENTS, PUBLIC_COMPONENTS } from '../format/registry';
+import {
+  componentDescriptionPL,
+  componentPropertiesPL,
+} from '../format/registry.pl';
 import { parseLearnMD } from '../format/parser';
 import { ReaderContent } from '../reader/ReaderContent';
-import type { DetailLevel as Detail } from '../reader/context';
-import { DetailControl } from '../components/DetailControl';
 import unitCircle from '../assets/unit-circle.png?inline';
+import { useI18n } from '../i18n';
 
-export function Showcase({
-  detail,
-  setDetail,
-}: {
-  detail: Detail;
-  setDetail: (d: Detail) => void;
-}) {
+export function Showcase() {
+  const { t } = useI18n();
+  const categoryLabel = (category: string) =>
+    ({
+      Educational: t('Educational', 'Edukacyjne'),
+      Interactive: t('Interactive', 'Interaktywne'),
+      Layout: t('Layout', 'Układ'),
+      Technical: t('Technical', 'Techniczne'),
+      Diagrams: t('Diagrams', 'Diagramy'),
+      Progressive: t('Progressive', 'Stopniowe odkrywanie'),
+      Composition: t('Composition', 'Kompozycja'),
+    })[category] ?? category;
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState('definition');
   const components = PUBLIC_COMPONENTS;
   const entry = COMPONENTS.find((c) => c.name === selected) ?? COMPONENTS[0];
   const doc = useMemo(() => parseLearnMD(entry.example), [entry]);
+  const propertiesPL = componentPropertiesPL(entry);
   return (
     <div className="page showcase-page">
-      <div className="eyebrow">THE LEARNMD FIELD GUIDE</div>
-      <h1>Ideas deserve the right form.</h1>
+      <div className="eyebrow">
+        {t('THE LEARNMD FIELD GUIDE', 'PRZEWODNIK PO LEARNMD')}
+      </div>
+      <h1>
+        {t(
+          'Ideas deserve the right form.',
+          'Pomysły zasługują na dobrą formę.',
+        )}
+      </h1>
       <p className="page-description">
-        Explore the building blocks of a deeper understanding.
+        {t(
+          'Explore the building blocks of a deeper understanding.',
+          'Poznaj komponenty, które pomagają lepiej zrozumieć materiał.',
+        )}
         <br />
-        Every example is live. Try it, then take a look at the source.
+        {t(
+          'Every example is live. Try it, then take a look at the source.',
+          'Każdy przykład działa. Wypróbuj go, a potem zajrzyj do źródła.',
+        )}
       </p>
       <FormatDiagnosticsDemo />
       <div className="showcase-layout">
@@ -35,8 +57,8 @@ export function Showcase({
           <label className="search-box">
             <Search size={15} />
             <input
-              aria-label="Find a component"
-              placeholder="Find a component…"
+              aria-label={t('Find a component', 'Znajdź komponent')}
+              placeholder={t('Find a component…', 'Znajdź komponent…')}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
@@ -44,7 +66,7 @@ export function Showcase({
           {Array.from(new Set(components.map((c) => c.category))).map(
             (category) => (
               <div key={category}>
-                <h3>{category}</h3>
+                <h3>{categoryLabel(category)}</h3>
                 {components
                   .filter(
                     (c) =>
@@ -67,38 +89,42 @@ export function Showcase({
         </aside>
         <section className="component-example">
           <div className="example-heading">
-            <span className="eyebrow">{entry.category}</span>
+            <span className="eyebrow">{categoryLabel(entry.category)}</span>
             <h2>{entry.name}</h2>
-            <p>{entry.description}</p>
+            <p>{t(entry.description, componentDescriptionPL(entry))}</p>
           </div>
-          <DetailControl detail={detail} setDetail={setDetail} />
           <div className="live-example" key={selected}>
             <ReaderContent
               document={doc}
-              detail={detail}
               assets={{ 'unit-circle.png': unitCircle }}
             />
           </div>
           <details className="source-example" open>
-            <summary>Authoring syntax</summary>
+            <summary>{t('Authoring syntax', 'Składnia źródła')}</summary>
             <pre>{entry.example}</pre>
           </details>
-          <h3>Properties</h3>
+          <h3>{t('Properties', 'Właściwości')}</h3>
           <dl className="property-list">
             {Object.entries(entry.properties).map(([key, value]) => (
               <div key={key}>
                 <dt>
                   <code>{key}</code>
                 </dt>
-                <dd>{value}</dd>
+                <dd>{t(value, propertiesPL[key])}</dd>
               </div>
             ))}
           </dl>
           <p className="fineprint">
-            Nested containers use longer outer fences: <code>::::tabs</code>{' '}
-            contains <code>:::tab</code>. Close each block with exactly the same
-            number of colons used to open it. See Generate notes for the full
-            reference.
+            {t(
+              'Nested containers use longer outer fences:',
+              'Zagnieżdżone kontenery wymagają dłuższych zewnętrznych znaczników:',
+            )}{' '}
+            <code>::::tabs</code> {t('contains', 'zawiera')} <code>:::tab</code>
+            .{' '}
+            {t(
+              'Close each block with exactly the same number of colons used to open it. See Generate notes for the full reference.',
+              'Zamknij każdy blok dokładnie taką samą liczbą dwukropków jak przy otwieraniu. Pełną specyfikację znajdziesz w sekcji Generuj notatki.',
+            )}
           </p>
         </section>
       </div>

@@ -109,7 +109,7 @@ After each comparison, the unknown interval has at most about half as many eleme
 
 An array with roughly one million elements needs only about twenty halvings. This is a statement about comparison count and assumes constant-time access to the midpoint. A linked list does not provide that access, so blindly transferring the array analysis would be misleading.
 
-:::detail-level{level="detailed" title="The cost of maintaining sorted order"}
+:::section{title="The cost of maintaining sorted order"}
 Binary search makes lookup efficient, but inserting into a contiguous sorted array may still move $O(n)$ elements. If a workload performs many updates, a balanced search tree or another structure may be more appropriate. Analyze the entire workload, including memory locality and update frequency, instead of selecting a data structure from one operation's complexity.
 :::
 

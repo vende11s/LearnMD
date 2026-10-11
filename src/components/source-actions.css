@@ -1,0 +1,52 @@
+.document-source-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  border-top: 1px solid var(--line);
+  padding: 15px 0;
+  margin: 0 0 20px;
+}
+.document-source-action .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.document-source-action p {
+  flex: 1;
+  min-width: 180px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+.document-source-action [role='alert'] {
+  width: 100%;
+  color: var(--ink);
+  font-size: 12px;
+}
+.selection-source-action {
+  position: fixed;
+  z-index: 80;
+  max-width: calc(100vw - 24px);
+}
+.selection-source-action .button {
+  box-shadow: 0 4px 22px #15221830;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.selection-copy-error {
+  display: block;
+  width: 200px;
+  padding: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+}
+@media print {
+  .document-source-action,
+  .selection-source-action {
+    display: none !important;
+  }
+}

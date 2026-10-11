@@ -1,11 +1,8 @@
 import { useState } from 'react';
-import {
-  ChevronDown,
-  ChevronRight,
-  Folder as FolderIcon,
-  MoreHorizontal,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
 import type { Note, Folder } from '../storage';
+import { useI18n } from '../i18n';
+import { FolderGlyph } from './FolderIcon';
 
 export function FolderBranch({
   folder,
@@ -24,6 +21,8 @@ export function FolderBranch({
   onManage: (id: string) => void;
   depth?: number;
 }) {
+  const { t } = useI18n();
+  const displayName = folder.name;
   const [expanded, setExpanded] = useState(true);
   const children = folders.filter((f) => f.parentId === folder.id);
   if (depth > 24) return null;
@@ -36,7 +35,11 @@ export function FolderBranch({
         {children.length > 0 ? (
           <button
             className="folder-chevron"
-            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${folder.name}`}
+            aria-label={
+              expanded
+                ? t(`Collapse ${displayName}`, `Zwiń ${displayName}`)
+                : t(`Expand ${displayName}`, `Rozwiń ${displayName}`)
+            }
             onClick={() => setExpanded(!expanded)}
           >
             {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -45,13 +48,16 @@ export function FolderBranch({
           <span className="folder-spacer" />
         )}
         <button className="folder-link" onClick={() => onSelect(folder.id)}>
-          <FolderIcon size={17} />
-          <span>{folder.name}</span>
+          <FolderGlyph icon={folder.icon} size={17} />
+          <span>{displayName}</span>
           <small>{notes.filter((n) => n.folderId === folder.id).length}</small>
         </button>
         <button
           className="folder-more"
-          aria-label={`Manage folder ${folder.name}`}
+          aria-label={t(
+            `Manage folder ${displayName}`,
+            `Zarządzaj folderem ${displayName}`,
+          )}
           onClick={() => onManage(folder.id)}
         >
           <MoreHorizontal size={15} />
