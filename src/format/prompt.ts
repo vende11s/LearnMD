@@ -168,7 +168,7 @@ ${COMPONENTS.map(buildComponentCatalogEntry).join('\n')}`;
 }
 
 const generationGrammar = String.raw`FORMAT AND FENCES
-LearnMD ${FORMAT_VERSION} supports UTF-8 Markdown, GFM tables/task lists, LaTeX math and fenced code. Return one complete raw .learn.md document, starting with YAML frontmatter and an H1; no enclosing code fence, surrounding commentary, or unfinished placeholders.
+LearnMD ${FORMAT_VERSION} supports UTF-8 Markdown, GFM tables/task lists, LaTeX math and fenced code. Return the entire raw .learn.md document in exactly one Markdown code block tagged markdown, ready to copy in one action. Inside that block, start with YAML frontmatter and an H1. Use at least four backticks for the outer fences, longer than every backtick run inside the document, with matching opening and closing lengths. Preserve any inner code fences. Include no text outside the block, no separate blocks for individual sections, and no unfinished placeholders.
 YAML fields only: title (<=300 chars), description (<=2000), subject (<=120), author (<=300), tags (<=50 strings, each 1–80 chars), version ("1.0"). Use title and version; other fields are optional. Do not invent an author or use YAML aliases, anchors, tags or nested objects.
 Use container directives only: an opening line such as :::definition{title="Term"}, Markdown body, then ::: on its own line. Quote every attribute value; write &quot; for quotes within a value. Separate attributes with spaces. Closing fences must match their opening colon count; every parent MUST have more colons than its immediately nested child (for example 5, 4, 3). Never indent fences as code, close after body text on the same line, or use inline/leaf shorthand. Put blank lines around blocks. Use only cataloged names/attributes and obey direct-parent/child restrictions.
 
@@ -218,7 +218,7 @@ These four independent examples demonstrate composition, not required lesson len
 ${PROMPT_EXAMPLES.map((example, index) => `EXAMPLE ${index + 1}: ${example.name}\n\n${example.source}`).join('\n\n')}
 
 FINAL CHECK
-Use the provided materials/topic wherever they appear in the conversation. Match the requested language and scope; remove filler without removing needed reasoning. Verify factual claims, answers, math, matching fences, required attributes, child relationships, IDs/references, variables and resource limits. Return only the complete raw LearnMD document with YAML frontmatter and H1.`;
+Use the provided materials/topic wherever they appear in the conversation. Match the requested language and scope; remove filler without removing needed reasoning. Verify factual claims, answers, math, matching fences, required attributes, child relationships, IDs/references, variables and resource limits. Return only one copyable Markdown code block containing the complete LearnMD source, with YAML frontmatter and an H1 inside.`;
 }
 
 export function buildFormatReference(): string {

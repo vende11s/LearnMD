@@ -6,13 +6,15 @@ Decision and evidence recorded on 11 October 2026. This change reduces repeated 
 
 The previous default prompt measured **57,885 Unicode characters, 7,888 words, and 1,699 lines** before adding learning materials. The full component reference accounted for **77.8%** of its characters. These are text measurements, not token counts; tokenization varies by model and language.
 
-The revised default measures **23,559 characters, 3,035 whitespace-separated words, and 252 lines**: **59.3% fewer characters**. Both measurements use the balanced output of `buildGenerationPrompt()`; the baseline is available at commit `c6539ab`. The complete format-reference output remains unchanged. The 28,000-character regression check is a maintenance guard against accidentally reintroducing the full manual, not a claimed model context limit.
+The compact revision at commit `523d1ae` measured **23,559 characters, 3,035 whitespace-separated words, and 252 lines**: **59.3% fewer characters**. Both measurements use the balanced output of `buildGenerationPrompt()`; the baseline is available at commit `c6539ab`. The complete format-reference output remains unchanged. The 28,000-character regression check is a maintenance guard against accidentally reintroducing the full manual, not a claimed model context limit.
 
 The generation prompt retains a compact schema derived from the same registry as the parser: **65 public components and 22 structural children**, including attribute types, required fields, allowed values, and child relationships. Keeping every supported component available avoids silently reducing the format to a small preferred subset.
 
 Instead of embedding a complete worked example for every component, the prompt uses **four selective examples** to teach difficult syntax and composition: a quiz carousel, mathematics and code, a diagram, and shared state. The complete reference and working examples remain available in `docs/FORMAT.md` and the application's component guide.
 
 The writing instruction explicitly requests concise, educationally complete notes: remove repetition and unnecessary introductions, but retain definitions, assumptions, necessary intermediate reasoning, worked examples, and qualifications. A shorter format manual is not a requirement to make every lesson short. Neither prompt nor note receives an arbitrary universal token ceiling.
+
+On 12 October 2026, the response contract was updated to request the entire note in one copyable Markdown code block, tagged `markdown`, with no surrounding commentary. Its outer backtick fences must be at least four characters long, longer than every backtick run inside the note, and identical in opening/closing length. This preserves inner code examples and lets the existing importer remove the outer wrapper without changing the note source.
 
 ## What the evidence supports
 

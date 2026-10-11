@@ -30,7 +30,7 @@ Each browser and origin has its own local library. To move notes from a local de
 
 ## Use
 
-- **Generate notes:** copy the compact format and teaching prompt into ChatGPT, Claude, Gemini, or another LLM, along with slides, PDFs, exercise sets, notes, or a topic you want to learn. It asks for concise explanations that retain necessary reasoning. The import dialog links directly to this screen. LearnMD itself sends no AI requests.
+- **Generate notes:** copy the compact format and teaching prompt into ChatGPT, Claude, Gemini, or another LLM, along with slides, PDFs, exercise sets, notes, or a topic you want to learn. It asks for concise explanations that retain necessary reasoning, returned as one code block for easy copying. The import dialog links directly to this screen. LearnMD itself sends no AI requests.
 - **Add note:** paste source or import `.learn.md` / `.md` files. An unambiguous enclosing Markdown fence is removed automatically. Inspect validation messages before importing.
 - **Reader:** navigate a chapter, reveal proofs and derivations, and explore diagrams. Sections display their complete authored text; layered explanations use manually selected tabs. Reading position is saved. Responses, scratchpad work, and component interaction state are temporary; source remains read-only.
 - **Ask your LLM:** use **Copy source** above a document to copy its full LearnMD source. Selecting text reveals a floating source button that copies the original selected blocks, including Markdown, formulas, and complete component fences. Paste this context into your preferred LLM and ask follow-up questions.

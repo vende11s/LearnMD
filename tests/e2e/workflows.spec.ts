@@ -95,6 +95,7 @@ test('copy prompt → validate paste → read, interact, and reload the local co
     expect(prompt).toContain('LearnMD');
     expect(prompt).toContain('derivation');
     expect(prompt).toContain('code-walkthrough');
+    expect(prompt).toContain('exactly one Markdown code block tagged markdown');
   }
 
   const dialog = await openImport(page);
@@ -109,7 +110,7 @@ test('copy prompt → validate paste → read, interact, and reload the local co
   ).toBeDisabled();
   await dialog
     .getByLabel('LearnMD source')
-    .fill(`\`\`\`\`learn.md\n${chapter()}\n\`\`\`\``);
+    .fill(`\`\`\`\`markdown\n${chapter()}\n\`\`\`\``);
   await expect(dialog.getByText(/words · ready to import/)).toBeVisible();
   await dialog.getByRole('button', { name: 'Import & open' }).click();
   await expect(

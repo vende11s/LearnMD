@@ -205,12 +205,18 @@ describe('generation requirements', () => {
     );
   });
 
-  it('keeps the raw document, composition, safety and manual-interaction contract', () => {
+  it('keeps the copyable source, composition, safety and manual-interaction contract', () => {
     const prompt = buildGenerationPrompt();
     expect(prompt).toMatch(
-      /raw \.learn\.md document.*YAML frontmatter and an H1/,
+      /raw \.learn\.md document in exactly one Markdown code block tagged markdown.*YAML frontmatter and an H1/,
     );
-    expect(prompt).toMatch(/no enclosing code fence.*commentary.*placeholders/);
+    expect(prompt).toMatch(
+      /at least four backticks.*longer than every backtick run/,
+    );
+    expect(prompt).toMatch(
+      /no text outside the block.*no separate blocks.*placeholders/,
+    );
+    expect(prompt).not.toContain('no enclosing code fence');
     expect(prompt).toMatch(
       /parent MUST have more colons than its immediately nested child/,
     );
