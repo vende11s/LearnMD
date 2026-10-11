@@ -28,11 +28,11 @@ Prompt checks independently read the compact catalog and verify all 65 public co
 
 The UI and security review led to fixes for partial batch writes, unsafe replacement collisions, stale image attachments on paste replacement, excessive folder-restore work, decoded asset bounds, hidden semantic targets, hash-route interference, reading-position races, scroll overflow, and service-worker cache matching. The final local suite rechecked these behaviors against the current revision.
 
-## Previous deployment verification
+## Deployment verification
 
-[GitHub Actions run 38169031381](https://github.com/vende11s/LearnMD/actions/runs/38169031381) passed 277 unit tests, the production build, and all 41 browser tests (20 Chromium, 20 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
+[GitHub Actions run 38170003779](https://github.com/vende11s/LearnMD/actions/runs/38170003779), for application commit `523d1ae`, passed 287 unit tests, the production build, and all 41 browser tests (20 Chromium, 20 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
 
-The published site at [vende11s.github.io/LearnMD/](https://vende11s.github.io/LearnMD/) returned HTTP 200 and passed an additional Chromium smoke test covering the single Polish guide, removed decorative UI, exactly two import choices, the import-to-generation action, English authored-guide localization, quiz carousel interaction, and offline reload with mathematical rendering. The import dialog was also checked at 390 pixels and visually inspected. No page errors or failed application responses were recorded.
+The published site at [vende11s.github.io/LearnMD/](https://vende11s.github.io/LearnMD/) returned HTTP 200 and passed an additional Chromium smoke test. Its Polish generation screen displayed the compact-format label, and the live preview exactly matched the locally generated prompt. The actual clipboard content also matched after normalizing Windows CRLF line endings to LF: 23,559 characters and 3,035 words. The check confirmed all 65 public components plus 22 structural children, the source-language instruction, and concise writing with necessary reasoning. No page errors were recorded.
 
 ## Local verification limit
 
