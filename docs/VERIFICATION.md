@@ -1,10 +1,10 @@
 # Verification record
 
-Local verification on 11 October 2026 using Node.js 22.20.0 on Windows, after compacting the generation prompt while preserving its format contract. GitHub Actions checks the same source on Ubuntu with Node.js 22 before deployment.
+Verification on 11 October 2026 after shortening the welcome guide. Local unit tests, the production build, four onboarding browser scenarios, and desktop/mobile visual checks ran on Windows with Node.js 22.20.0. GitHub Actions ran the complete unit and browser suites on Ubuntu with Node.js 22 before deployment.
 
 | Check                                                                                             | Result                                  |
 | ------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Complete unit suite: format, renderer, interface, storage, migration, security, and guide content | 287 passing across 13 files             |
+| Complete unit suite: format, renderer, interface, storage, migration, security, and guide content | 288 passing across 13 files             |
 | English/Polish guide, interactive answers, metadata, and LaTeX                                    | 5 passing, included in the unit total   |
 | TypeScript and production build                                                                   | Passing                                 |
 | Chromium end-to-end workflows                                                                     | 20 passing                              |
@@ -22,7 +22,7 @@ Desktop, dark-theme, and 390-pixel-wide reader screenshots were captured and vis
 
 Folder scenarios cover empty initial folders, icon creation/editing/reload, nested folder icon backup/restore, the 390-pixel icon picker, existing folder reparenting, image backup/restore, and offline initialization. Desktop and mobile picker screenshots are saved in `docs/screenshots/`.
 
-Onboarding scenarios verify the one-guide library, removed decorative text, the direct import-to-generation action, two clear import choices, English/Polish authored content, unchanged personal imports, permanent guide deletion, and several interactive question types with preserved carousel answers. Twenty initialization tests cover legacy sample cleanup, user records and assets, language changes, ownership, concurrent initialization, and transactional rollback.
+Onboarding scenarios verify the one-guide library, removed decorative text, the direct import-to-generation action, two clear import choices, English/Polish authored content, unchanged personal imports, permanent guide deletion, and several interactive question types with preserved carousel answers. Both short guides use three workflow steps and four fraction challenges, with a 400-word ceiling that includes authored labels and feedback. Browser coverage answers all four challenges and verifies that the first answer survives carousel navigation. Twenty-one initialization tests cover legacy sample cleanup, user records and assets, language changes, ownership, concurrent initialization, transactional rollback, and same-language guide revisions that preserve personal organization and reading state.
 
 Prompt checks independently read the compact catalog and verify all 65 public components and 22 structural children, exact attribute sets, required values, enums, numeric bounds, lexical types, and parent/child relationships. All four selected examples parse without diagnostics; assertions inspect their carousel, quiz, math, reference, code, diagram, and shared-state structure. Browser checks confirm that the copied English prompt matches its preview, requests concise notes with necessary reasoning, and stays below the maintenance size guard. The complete format reference is unchanged. These checks validate the authoring contract, not model-generated teaching quality; no model A/B evaluation was performed. See [the research and design record](PROMPT-DESIGN.md).
 
@@ -30,9 +30,9 @@ The UI and security review led to fixes for partial batch writes, unsafe replace
 
 ## Deployment verification
 
-[GitHub Actions run 38170003779](https://github.com/vende11s/LearnMD/actions/runs/38170003779), for application commit `523d1ae`, passed 287 unit tests, the production build, and all 41 browser tests (20 Chromium, 20 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
+[GitHub Actions run 38170831040](https://github.com/vende11s/LearnMD/actions/runs/38170831040), for application commit `ac33109`, passed 288 unit tests, the production build, and all 41 browser tests (20 Chromium, 20 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
 
-The published site at [vende11s.github.io/LearnMD/](https://vende11s.github.io/LearnMD/) returned HTTP 200 and passed an additional Chromium smoke test. Its Polish generation screen displayed the compact-format label, and the live preview exactly matched the locally generated prompt. The actual clipboard content also matched after normalizing Windows CRLF line endings to LF: 23,559 characters and 3,035 words. The check confirmed all 65 public components plus 22 structural children, the source-language instruction, and concise writing with necessary reasoning. No page errors were recorded.
+The published site at [vende11s.github.io/LearnMD/](https://vende11s.github.io/LearnMD/) returned HTTP 200 and passed an additional Chromium smoke test at desktop and 390-pixel mobile widths. Both fresh libraries opened the short Polish guide with its updated introduction and four-slide carousel. The layout had no horizontal page overflow and no page errors. Desktop and mobile views were also visually inspected locally.
 
 ## Local verification limit
 
