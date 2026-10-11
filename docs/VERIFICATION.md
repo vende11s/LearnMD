@@ -1,16 +1,16 @@
 # Verification record
 
-Verification on 11 October 2026 using Node.js 22.20.0 on Windows, after simplifying the reader and format.
+Verification on 11 October 2026 using Node.js 22.20.0 on Windows, after simplifying the reader and format. The same revision also passed the full GitHub Actions suite on Ubuntu with Node.js 22.
 
-| Check                                                                                              | Result                                      |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Complete unit suite: format, renderer, interface, storage, migration, security, and sample content | 261 passing across 11 files                 |
-| Six substantive sample chapters and their LaTeX expressions                                        | 6 passing, included in the unit total       |
-| TypeScript and production build                                                                    | Passing                                     |
-| Chromium end-to-end workflows                                                                      | 16 passing                                  |
-| Project-path production build reopening notes, images, and guide offline                           | 1 passing                                   |
-| npm dependency audit                                                                               | Previous audit: 0 known vulnerabilities     |
-| Firefox browser execution                                                                          | Blocked by local Windows runtime; see below |
+| Check                                                                                              | Result                                     |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Complete unit suite: format, renderer, interface, storage, migration, security, and sample content | 261 passing across 11 files                |
+| Six substantive sample chapters and their LaTeX expressions                                        | 6 passing, included in the unit total      |
+| TypeScript and production build                                                                    | Passing                                    |
+| Chromium end-to-end workflows                                                                      | 16 passing                                 |
+| Project-path production build reopening notes, images, and guide offline                           | 1 passing                                  |
+| npm dependency audit                                                                               | Previous audit: 0 known vulnerabilities    |
+| Firefox browser execution                                                                          | 16 passing on Ubuntu CI; local limit below |
 
 ## End-to-end scope
 
@@ -24,9 +24,15 @@ Folder scenarios cover empty initial folders, icon creation/editing/reload, nest
 
 The UI and security review led to fixes for partial batch writes, unsafe replacement collisions, stale image attachments on paste replacement, excessive folder-restore work, decoded asset bounds, hidden semantic targets, hash-route interference, reading-position races, scroll overflow, and service-worker cache matching. The final local suite rechecked these behaviors against the current revision.
 
-## Remaining verification limit
+## Deployment verification
 
-The Playwright Firefox binary was installed, but Windows cannot launch it: its side-by-side configuration reports a missing `mozglue` assembly. This is a browser-runtime failure before the application loads. No Firefox compatibility pass is claimed. The Firefox project remains configured; run `npm run test:e2e -- --project=firefox` on a host with a functioning Firefox runtime.
+[GitHub Actions run 38167646320](https://github.com/vende11s/LearnMD/actions/runs/38167646320) passed 261 unit tests, the production build, and all 33 browser tests (16 Chromium, 16 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
+
+The published site at [vende11s.github.io/LearnMD/](https://vende11s.github.io/LearnMD/) returned HTTP 200 and passed an additional Chromium smoke test covering the six-note library, Settings without Reading or density controls, Polish language switching, the English prompt and its output-language instruction, all 65 guide entries, carousel interaction, source copying, mathematical rendering, and offline reload. The worker scope was exactly `/LearnMD/`, with no page errors or failed application responses.
+
+## Local verification limit
+
+The Playwright Firefox binary was installed, but this Windows host cannot launch it: its side-by-side configuration reports a missing `mozglue` assembly. This is a browser-runtime failure before the application loads. Firefox verification was completed successfully on the Ubuntu GitHub Actions runner instead. The Firefox project remains configured; run `npm run test:e2e -- --project=firefox` on a host with a functioning Firefox runtime.
 
 The application relies on standard IndexedDB, file inputs, native controls, and optional directory input. It does not depend on Chromium's File System Access API. Directory selection and persistent-storage grants depend on the browser.
 
