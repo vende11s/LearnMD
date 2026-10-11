@@ -23,7 +23,7 @@ The core workflow uses standard file inputs, drag and drop, pasted text, and Ind
 
 ## Content as a verification surface
 
-One root-level LearnMD guide introduces the workflow in English or Polish and demonstrates progressive reasoning, alternative views, and a carousel with varied interactive questions. It uses the same public format as imported notes. A transactional migration removes known legacy sample records, preserves personal imports, and seeds the guide once. A stored ownership snapshot allows language changes to refresh only the unmodified built-in guide, retaining organization and reading state. Deletion or content customization stops automatic updates; changing language never recreates a deleted guide.
+One short root-level LearnMD guide introduces the workflow in English or Polish through three steps, a revealable mathematical example, and four carousel challenges with different question types. It uses the same public format as imported notes. A transactional migration removes known legacy sample records, preserves personal imports, and seeds the guide once. A stored ownership snapshot allows both content revisions and language changes to refresh only the unmodified built-in guide, retaining organization and reading state. Deletion or content customization stops automatic updates; changing language never recreates a deleted guide.
 
 The component showcase complements the guide by exposing every registered component, including combinations and edge cases. Automated checks cover parser boundaries, interaction transitions, storage mutations, import and replacement semantics, prompt consistency, and unsafe input. Browser verification covers the complete workflow, reload persistence, printing, themes, and narrow layouts.
 

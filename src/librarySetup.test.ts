@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGuide, GUIDE_ID, LEGACY_SAMPLE_IDS } from './content/guide';
+import * as guideContent from './content/guide';
 import {
   GUIDE_MIGRATION_KEY,
   GUIDE_OWNERSHIP_KEY,
@@ -305,6 +306,68 @@ describe('a single removable localized guide', () => {
     expect((await database.notes.get(GUIDE_ID))?.source).toBe(original.source);
     expect((await database.notes.get(GUIDE_ID))?.folderId).toBe('mine');
     expect(await database.notes.count()).toBe(1);
+  });
+
+  it('upgrades an untouched earlier guide revision in the same language while retaining personal state', async () => {
+    const currentGuide = getGuide('en');
+    const previousGuide = {
+      ...currentGuide,
+      source:
+        '---\ntitle: "An earlier LearnMD guide"\nversion: "1.0"\n---\n\n# An earlier LearnMD guide\n\nThis is the older shipped introduction.',
+    };
+    // Seed through the real initializer to persist the previous release's
+    // ownership snapshot, rather than constructing its private representation.
+    const oldRelease = vi
+      .spyOn(guideContent, 'getGuide')
+      .mockReturnValue(previousGuide);
+    try {
+      await initializeLibrary(database, 'en');
+    } finally {
+      oldRelease.mockRestore();
+    }
+    await database.folders.add({
+      id: 'guide-folder',
+      name: 'My useful notes',
+      parentId: null,
+      icon: 'book',
+    });
+    await database.notes.update(GUIDE_ID, {
+      folderId: 'guide-folder',
+      favorite: true,
+      openedAt: 987,
+      position: 321,
+    });
+    const original = (await database.notes.get(GUIDE_ID))!;
+    const personalCopy = await importNote(
+      previousGuide.source,
+      'guide-folder',
+      {},
+      database,
+    );
+    expect(original.source).toBe(extractSource(previousGuide.source));
+    database.close();
+    await database.open();
+
+    await initializeLibrary(database, 'en');
+
+    const updated = (await database.notes.get(GUIDE_ID))!;
+    expect(updated).toMatchObject({
+      id: original.id,
+      source: extractSource(currentGuide.source),
+      title: currentGuide.title,
+      description: currentGuide.description,
+      subject: currentGuide.subject,
+      folderId: 'guide-folder',
+      favorite: true,
+      openedAt: 987,
+      position: 321,
+      createdAt: original.createdAt,
+      sample: true,
+    });
+    expect(await database.notes.get(personalCopy.id)).toEqual(personalCopy);
+    expect(await database.notes.count()).toBe(2);
+    await initializeLibrary(database, 'en');
+    expect(await database.notes.get(GUIDE_ID)).toEqual(updated);
   });
 
   it.each([

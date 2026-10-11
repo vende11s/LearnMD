@@ -26,16 +26,14 @@ const guides: Record<GuideLanguage, GuideDocument> = {
   en: {
     id: GUIDE_ID,
     title: 'Your first steps with LearnMD',
-    description:
-      'Turn your own materials into clear, interactive notes, then make this library your own.',
+    description: 'Three steps. Four quick challenges. Your turn.',
     subject: 'Getting started',
     source: englishGuideSource,
   },
   pl: {
     id: GUIDE_ID,
     title: 'Pierwsze kroki z LearnMD',
-    description:
-      'Zamień własne materiały w przejrzyste, interaktywne notatki i urządź bibliotekę po swojemu.',
+    description: 'Trzy kroki. Cztery krótkie zadania. Teraz Ty.',
     subject: 'Na początek',
     source: polishGuideSource,
   },

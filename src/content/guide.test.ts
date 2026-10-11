@@ -14,7 +14,7 @@ function nodesFor(language: GuideLanguage) {
 
 describe('the localized LearnMD welcome guide', () => {
   it.each(languages)(
-    '%s is a substantive valid LearnMD document with consistent metadata',
+    '%s is a short valid LearnMD welcome with consistent metadata',
     (language) => {
       const guide = getGuide(language);
       const document = parseLearnMD(guide.source);
@@ -26,11 +26,29 @@ describe('the localized LearnMD welcome guide', () => {
         subject: guide.subject,
         tags: ['guide', 'workflow'],
       });
-      expect(document.wordCount).toBeGreaterThan(900);
       const nodes = document.children.flatMap(allNodes);
+      // Include authored UI titles and feedback, which the parser's prose count
+      // omits, so brevity cannot be bypassed by moving paragraphs into attrs.
+      const authoredWords = nodes
+        .flatMap((node) => [
+          node.value ?? '',
+          ...[
+            'title',
+            'label',
+            'explanation',
+            'prompt',
+            'answer',
+            'left',
+            'right',
+          ].map((key) => node.attributes?.[key] ?? ''),
+        ])
+        .join(' ')
+        .trim()
+        .split(/\s+/u);
+      expect(authoredWords.length).toBeLessThanOrEqual(400);
       expect(
-        nodes.filter((node) => node.type === 'heading').length,
-      ).toBeGreaterThanOrEqual(7);
+        nodes.filter((node) => node.type === 'heading' && node.depth === 1),
+      ).toHaveLength(1);
       expect(nodes.some((node) => node.type === 'math')).toBe(true);
       for (const node of nodes.filter(
         (node) => node.type === 'math' || node.type === 'inlineMath',
@@ -53,7 +71,7 @@ describe('the localized LearnMD welcome guide', () => {
       const carousel = nodes.find((node) => node.name === 'carousel')!;
       expect(
         carousel.children?.filter((node) => node.name === 'slide'),
-      ).toHaveLength(6);
+      ).toHaveLength(4);
       const exercises = allNodes(carousel);
       const quizzes = exercises.filter((node) => node.name === 'quiz');
       expect(quizzes).toHaveLength(2);
@@ -67,20 +85,23 @@ describe('the localized LearnMD welcome guide', () => {
           quiz.attributes?.multiple === 'true' ? 2 : 1,
         );
         expect(choices.length).toBeGreaterThan(correct.length);
-        expect(quiz.attributes?.explanation?.length).toBeGreaterThan(80);
+        expect(quiz.attributes?.explanation?.trim()).toBeTruthy();
       }
       const blank = exercises.find((node) => node.name === 'fill-blank');
-      expect(blank?.attributes?.answer?.split('|')).toContain('learn.md');
-      expect(exercises.filter((node) => node.name === 'pair')).toHaveLength(4);
+      expect(blank?.attributes?.answer?.split('|')).toContain('25');
+      const pairs = exercises.filter((node) => node.name === 'pair');
+      expect(pairs).toHaveLength(3);
       expect(
-        exercises.some(
-          (node) => node.name === 'question' && node.attributes?.answer,
-        ),
+        pairs.every((node) => node.attributes?.left && node.attributes?.right),
       ).toBe(true);
-      expect(exercises.some((node) => node.name === 'scratchpad')).toBe(true);
-      expect(nodes.some((node) => node.name === 'tabs')).toBe(true);
-      expect(nodes.some((node) => node.name === 'steps')).toBe(true);
-      expect(nodes.some((node) => node.name === 'reveal')).toBe(true);
+      expect(new Set(pairs.map((node) => node.attributes?.right)).size).toBe(3);
+      const steps = nodes.find((node) => node.name === 'steps')!;
+      expect(
+        steps.children?.filter((node) => node.name === 'step'),
+      ).toHaveLength(3);
+      const reveal = nodes.find((node) => node.name === 'reveal')!;
+      expect(reveal.attributes?.label).toBeTruthy();
+      expect(reveal.children?.length).toBeGreaterThan(0);
     },
   );
 

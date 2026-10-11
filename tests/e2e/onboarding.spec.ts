@@ -119,12 +119,10 @@ test('localizes the authored guide while preserving imported content and the cho
     page.getByRole('heading', { level: 2, name: polishGuide, exact: true }),
   ).toBeVisible();
   await expect(
-    page
-      .locator('.note-card')
-      .getByRole('heading', {
-        name: 'My untranslated field notes',
-        exact: true,
-      }),
+    page.locator('.note-card').getByRole('heading', {
+      name: 'My untranslated field notes',
+      exact: true,
+    }),
   ).toBeVisible();
   await page
     .locator('.note-card')
@@ -201,7 +199,7 @@ test('keeps a deliberately deleted guide deleted after reload and language chang
   await expect(page.locator('.note-card')).toHaveCount(0);
 });
 
-test('teaches the workflow through progressive steps and varied carousel exercises with preserved answers', async ({
+test('introduces the workflow and four short fraction exercises with preserved answers', async ({
   page,
 }) => {
   await start(page);
@@ -209,23 +207,23 @@ test('teaches the workflow through progressive steps and varied carousel exercis
     .getByRole('button', { name: 'Open the notes', exact: true })
     .click();
   const steps = page.getByRole('region', {
-    name: 'From your materials to your library',
+    name: 'From topic to note',
     exact: true,
   });
   await expect(
-    steps.getByText('2. Copy the generation prompt', { exact: true }),
+    steps.getByText('Ask your LLM', { exact: true }),
   ).not.toBeVisible();
   await steps.getByRole('button', { name: 'Next step', exact: true }).click();
   await expect(
-    steps.getByText('2. Copy the generation prompt', { exact: true }),
+    steps.getByText('Ask your LLM', { exact: true }),
   ).toBeVisible();
 
   const carousel = page.getByRole('region', {
-    name: 'A little practice before your first import',
+    name: 'Give it a try',
     exact: true,
   });
   const firstAnswer = carousel.getByRole('radio', {
-    name: /^Open Add note, paste the document, review validation, and import it\./,
+    name: /^3\/4/,
   });
   await firstAnswer.check();
   await carousel
@@ -236,17 +234,17 @@ test('teaches the workflow through progressive steps and varied carousel exercis
     .getByRole('button', { name: 'Next slide', exact: true })
     .click();
   await expect(
-    carousel.getByText('Slide 2 of 6', { exact: true }),
+    carousel.getByText('Slide 2 of 4', { exact: true }),
   ).toBeVisible();
   await carousel
     .getByRole('checkbox', {
-      name: 'Use Settings → Export library.',
+      name: '3/4',
       exact: true,
     })
     .check();
   await carousel
     .getByRole('checkbox', {
-      name: 'Keep that backup file and restore it in LearnMD on the other computer.',
+      name: '4/4',
       exact: true,
     })
     .check();
@@ -258,12 +256,33 @@ test('teaches the workflow through progressive steps and varied carousel exercis
     .getByRole('button', { name: 'Next slide', exact: true })
     .click();
   await carousel
-    .getByRole('textbox', { name: 'Complete the filename', exact: true })
-    .fill('learn.md');
+    .getByRole('textbox', {
+      name: 'From fractions to percentages',
+      exact: true,
+    })
+    .fill('25');
   await carousel
     .getByRole('button', { name: 'Check answer', exact: true })
     .click();
   await expect(carousel.getByRole('status')).toContainText('Exactly right.');
+  await carousel
+    .getByRole('button', { name: 'Next slide', exact: true })
+    .click();
+  await carousel
+    .getByRole('combobox', { name: '1/4', exact: true })
+    .selectOption('One quarter');
+  await carousel
+    .getByRole('combobox', { name: '1/2', exact: true })
+    .selectOption('One half');
+  await carousel
+    .getByRole('combobox', { name: '3/4', exact: true })
+    .selectOption('Three quarters');
+  await carousel
+    .getByRole('button', { name: 'Check matches', exact: true })
+    .click();
+  await expect(carousel.getByRole('status')).toContainText(
+    'All connections are correct.',
+  );
   await carousel
     .getByRole('combobox', { name: 'Go to slide', exact: true })
     .selectOption('0');
