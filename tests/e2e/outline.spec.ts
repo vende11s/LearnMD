@@ -56,6 +56,18 @@ test('a long outline scrolls independently in both directions, including at its 
   expect(await workspace.evaluate((element) => element.scrollTop)).toBe(
     initialPosition,
   );
+  const firstOutlinePosition = await nav.evaluate(
+    (element) => element.scrollTop,
+  );
+  // The panel header is also part of its independent wheel area.
+  await page.locator('.document-outline > .eyebrow').hover();
+  await page.mouse.wheel(0, 120);
+  await expect
+    .poll(() => nav.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(firstOutlinePosition);
+  expect(await workspace.evaluate((element) => element.scrollTop)).toBe(
+    initialPosition,
+  );
   const outlinePosition = await nav.evaluate((element) => element.scrollTop);
 
   // Reading changes the highlighted entry, never the user's outline position.

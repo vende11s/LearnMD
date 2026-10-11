@@ -140,6 +140,41 @@ export function ReaderView({
     observer.observe(workspace);
     return () => observer.disconnect();
   }, [mainRef, outline]);
+  useEffect(() => {
+    const workspace = mainRef.current;
+    const aside = outlineRef.current;
+    const nav = outlineNavRef.current;
+    if (!workspace || !aside || !nav) return;
+    const scrollOutline = (event: WheelEvent) => {
+      // Preserve browser zoom; vertical gestures anywhere in this panel belong
+      // to its own scrollport, including when it has reached either boundary.
+      if (event.ctrlKey || !event.deltaY) return;
+      // Firefox may retain the previous wheel target after the pointer moves.
+      // Route by the pointer's current position rather than that stale target.
+      const bounds = aside.getBoundingClientRect();
+      if (
+        !bounds.width ||
+        event.clientX < bounds.left ||
+        event.clientX >= bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY >= bounds.bottom
+      )
+        return;
+      event.preventDefault();
+      const unit =
+        event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? nav.clientHeight
+          : event.deltaMode === WheelEvent.DOM_DELTA_LINE
+            ? parseFloat(getComputedStyle(nav).lineHeight) || 16
+            : 1;
+      nav.scrollTop += event.deltaY * unit;
+    };
+    workspace.addEventListener('wheel', scrollOutline, {
+      capture: true,
+      passive: false,
+    });
+    return () => workspace.removeEventListener('wheel', scrollOutline, true);
+  }, [mainRef, outline]);
   return (
     <div className={`reader-layout ${outline ? 'with-outline' : ''}`}>
       <div className="reader-column" ref={contentRef}>
