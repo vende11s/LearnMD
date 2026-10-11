@@ -1,10 +1,10 @@
 # Verification record
 
-Local verification on 11 October 2026 using Node.js 22.20.0 on Windows, after adding the localized onboarding guide and simplifying the import flow. GitHub Actions checks the same source on Ubuntu with Node.js 22 before deployment.
+Local verification on 11 October 2026 using Node.js 22.20.0 on Windows, after compacting the generation prompt while preserving its format contract. GitHub Actions checks the same source on Ubuntu with Node.js 22 before deployment.
 
 | Check                                                                                             | Result                                  |
 | ------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Complete unit suite: format, renderer, interface, storage, migration, security, and guide content | 277 passing across 12 files             |
+| Complete unit suite: format, renderer, interface, storage, migration, security, and guide content | 287 passing across 13 files             |
 | English/Polish guide, interactive answers, metadata, and LaTeX                                    | 5 passing, included in the unit total   |
 | TypeScript and production build                                                                   | Passing                                 |
 | Chromium end-to-end workflows                                                                     | 20 passing                              |
@@ -24,9 +24,11 @@ Folder scenarios cover empty initial folders, icon creation/editing/reload, nest
 
 Onboarding scenarios verify the one-guide library, removed decorative text, the direct import-to-generation action, two clear import choices, English/Polish authored content, unchanged personal imports, permanent guide deletion, and several interactive question types with preserved carousel answers. Twenty initialization tests cover legacy sample cleanup, user records and assets, language changes, ownership, concurrent initialization, and transactional rollback.
 
+Prompt checks independently read the compact catalog and verify all 65 public components and 22 structural children, exact attribute sets, required values, enums, numeric bounds, lexical types, and parent/child relationships. All four selected examples parse without diagnostics; assertions inspect their carousel, quiz, math, reference, code, diagram, and shared-state structure. Browser checks confirm that the copied English prompt matches its preview, requests concise notes with necessary reasoning, and stays below the maintenance size guard. The complete format reference is unchanged. These checks validate the authoring contract, not model-generated teaching quality; no model A/B evaluation was performed. See [the research and design record](PROMPT-DESIGN.md).
+
 The UI and security review led to fixes for partial batch writes, unsafe replacement collisions, stale image attachments on paste replacement, excessive folder-restore work, decoded asset bounds, hidden semantic targets, hash-route interference, reading-position races, scroll overflow, and service-worker cache matching. The final local suite rechecked these behaviors against the current revision.
 
-## Deployment verification
+## Previous deployment verification
 
 [GitHub Actions run 38169031381](https://github.com/vende11s/LearnMD/actions/runs/38169031381) passed 277 unit tests, the production build, and all 41 browser tests (20 Chromium, 20 Firefox, and one production/offline Chromium scenario), then successfully deployed to GitHub Pages.
 

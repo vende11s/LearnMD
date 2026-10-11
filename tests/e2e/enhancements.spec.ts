@@ -122,6 +122,12 @@ test.describe('language preference', () => {
       'OUTPUT LANGUAGE: Write the notes in the language of the supplied materials unless the user explicitly requests a different language.',
     );
     expect(prompt).toContain('CAROUSELS AND LONG QUESTION SETS');
+    expect(prompt).toContain('Write concise, clear explanatory notes');
+    expect(prompt).toContain('Preserve necessary reasoning');
+    expect(prompt.length).toBeLessThan(28_000);
+    expect(prompt).toBe(
+      await page.locator('.prompt-preview pre').textContent(),
+    );
     await page
       .getByRole('navigation', { name: 'Narzędzia' })
       .getByRole('button', { name: /^Komponenty\b/ })

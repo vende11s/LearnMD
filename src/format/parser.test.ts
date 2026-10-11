@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMPONENTS, COMPONENT_MAP, PUBLIC_COMPONENTS } from './registry';
+import { COMPONENTS, COMPONENT_MAP } from './registry';
 import {
   extractLearnMDSource,
   LIMITS,
@@ -452,42 +452,5 @@ describe('compatibility with retired density annotations', () => {
       expect(document).not.toContain('Associated detail level');
       expect(document).toContain('Manually switch between named explanations');
     }
-  });
-});
-
-describe('generation prompt consistency', () => {
-  it('includes at least 65 public components and all registered attributes and examples', () => {
-    expect(PUBLIC_COMPONENTS.length).toBeGreaterThanOrEqual(65);
-    expect(new Set(COMPONENTS.map((component) => component.name)).size).toBe(
-      COMPONENTS.length,
-    );
-    const prompt = buildGenerationPrompt();
-    for (const component of COMPONENTS) {
-      expect(prompt).toContain(`### ${component.name}`);
-      expect(prompt).toContain(component.example);
-      for (const key of Object.keys(component.properties))
-        expect(prompt).toContain(`- ${key}:`);
-    }
-    expect(prompt).toContain('outer fence MUST be longer');
-    expect(prompt).toContain('Do not invent facts');
-    expect(prompt).toContain('STRING value');
-  });
-
-  it('changes pedagogical style while keeping syntax constant', () => {
-    expect(buildGenerationPrompt('rigorous')).toContain(
-      'GENERATION STYLE: Rigorous',
-    );
-    expect(buildGenerationPrompt('unknown')).toBe(buildGenerationPrompt());
-  });
-
-  it('instructs source-language output prominently while describing carousel authoring in English', () => {
-    const prompt = buildGenerationPrompt();
-    expect(prompt.slice(0, 1000)).toContain(
-      'OUTPUT LANGUAGE: Write the notes in the language of the supplied materials unless the user explicitly requests a different language.',
-    );
-    expect(prompt).toContain('CAROUSELS AND LONG QUESTION SETS');
-    expect(prompt).toContain('no fixed slide-count cap');
-    expect(prompt).toContain('ordinary Markdown blockquote syntax');
-    expect(prompt).toContain('never invent source text or citations');
   });
 });

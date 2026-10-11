@@ -578,8 +578,8 @@ function AppInner() {
                       </h3>
                       <p>
                         {t(
-                          `Complete format reference · ${PUBLIC_COMPONENTS.length} components · teaching guidance`,
-                          `Pełny opis formatu · ${PUBLIC_COMPONENTS.length} elementów · wskazówki dydaktyczne`,
+                          `Compact format guide · ${PUBLIC_COMPONENTS.length} components · concise notes`,
+                          `Skrócony opis formatu · ${PUBLIC_COMPONENTS.length} elementów · zwięzłe notatki`,
                         )}
                       </p>
                     </div>
