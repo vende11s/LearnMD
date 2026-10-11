@@ -954,19 +954,28 @@ kbd {
   top: 40px;
   align-self: flex-start;
   padding-top: 7px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(var(--reader-viewport-height, 100dvh) - 72px);
 }
 .document-outline > .eyebrow {
   font-size: 8px;
+  flex-shrink: 0;
 }
 .document-outline nav {
   display: flex;
   flex-direction: column;
   gap: 15px;
   border-left: 1px solid var(--line);
-  padding-left: 16px;
-  margin-top: 25px;
+  padding: 6px 8px 6px 16px;
+  margin-top: 19px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
 }
 .document-outline nav button {
+  flex-shrink: 0;
   text-align: left;
   font-size: 10px;
   line-height: 1.5;
@@ -980,6 +989,7 @@ kbd {
 }
 .outline-bottom {
   display: flex;
+  flex-shrink: 0;
   gap: 8px;
   align-items: flex-start;
   border-top: 1px solid var(--line);
@@ -993,6 +1003,15 @@ kbd {
 }
 .document-outline > .text-button {
   font-size: 9px;
+  flex-shrink: 0;
+}
+@media (max-height: 600px) {
+  .outline-bottom {
+    display: none;
+  }
+  .document-outline > .text-button {
+    margin-top: 16px;
+  }
 }
 .reader-end {
   border-top: 1px solid var(--line);

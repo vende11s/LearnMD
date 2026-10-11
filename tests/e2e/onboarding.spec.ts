@@ -135,9 +135,11 @@ test('localizes the authored guide while preserving imported content and the cho
     .locator('.note-open')
     .click();
   await expect(
-    page.getByText('This sentence must remain exactly as I wrote it.', {
-      exact: true,
-    }),
+    page
+      .locator('.reader-column')
+      .getByText('This sentence must remain exactly as I wrote it.', {
+        exact: true,
+      }),
   ).toBeVisible();
 
   await page.reload();
@@ -150,9 +152,11 @@ test('localizes the authored guide while preserving imported content and the cho
     }),
   ).toBeVisible();
   await expect(
-    page.getByText('This sentence must remain exactly as I wrote it.', {
-      exact: true,
-    }),
+    page
+      .locator('.reader-column')
+      .getByText('This sentence must remain exactly as I wrote it.', {
+        exact: true,
+      }),
   ).toBeVisible();
   await library(page, 'pl');
   await expect(
@@ -214,9 +218,7 @@ test('introduces the workflow and four short fraction exercises with preserved a
     steps.getByText('Ask your LLM', { exact: true }),
   ).not.toBeVisible();
   await steps.getByRole('button', { name: 'Next step', exact: true }).click();
-  await expect(
-    steps.getByText('Ask your LLM', { exact: true }),
-  ).toBeVisible();
+  await expect(steps.getByText('Ask your LLM', { exact: true })).toBeVisible();
 
   const carousel = page.getByRole('region', {
     name: 'Give it a try',

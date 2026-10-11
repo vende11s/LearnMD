@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ArrowRight,
   BookOpen,
@@ -16,6 +17,8 @@ import { useStored } from '../hooks/useStored';
 import { useI18n } from '../i18n';
 import { FolderGlyph } from '../components/FolderIcon';
 import { GUIDE_ID } from '../content/guide';
+import { parseLearnMD } from '../format/parser';
+import { documentExcerpt, readingMinutes } from '../format/summary';
 
 export function LibraryPage({
   notes,
@@ -50,7 +53,19 @@ export function LibraryPage({
 }) {
   const { t } = useI18n();
   const [view, setView] = useStored<'grid' | 'list'>('learnmd-view', 'grid');
-  const visible = notes
+  const presentedNotes = useMemo(
+    () =>
+      notes.map((note) => {
+        const document = parseLearnMD(note.source);
+        return {
+          ...note,
+          excerpt: note.description.trim() || documentExcerpt(document),
+          minutes: readingMinutes(document),
+        };
+      }),
+    [notes],
+  );
+  const visible = presentedNotes
     .filter(
       (n) =>
         (!folderId || n.folderId === folderId) &&
@@ -66,7 +81,8 @@ export function LibraryPage({
           ? b.createdAt - a.createdAt
           : b.openedAt - a.openedAt,
     );
-  const featured = notes.find((n) => n.id === GUIDE_ID) ?? notes[0];
+  const featured =
+    presentedNotes.find((n) => n.id === GUIDE_ID) ?? presentedNotes[0];
   const home = route === 'library' && !query;
   const folderById = new Map(folders.map((folder) => [folder.id, folder]));
   const childFolders = folders.filter((folder) => folder.parentId === folderId);
@@ -122,7 +138,7 @@ export function LibraryPage({
             </span>
             <h2>{featured.title}</h2>
             <p>
-              {featured.description ||
+              {featured.excerpt ||
                 t(
                   'Explore an idea, follow the reasoning, and make the connections that matter.',
                   'Poznaj ideę, prześledź rozumowanie i dostrzeż ważne powiązania.',
@@ -136,11 +152,7 @@ export function LibraryPage({
               <ArrowRight size={16} />
             </button>
             <span className="featured-meta">
-              {featured.subject} <span>·</span>{' '}
-              {Math.max(
-                1,
-                Math.ceil(featured.source.split(/\s+/).length / 220),
-              )}{' '}
+              {featured.subject} <span>·</span> {featured.minutes}{' '}
               {t('min read', 'min czytania')}
               <span>·</span>
               {t('Interactive notes', 'Interaktywne notatki')}
@@ -349,10 +361,7 @@ export function LibraryPage({
               <button className="note-open" onClick={() => openNote(n.id)}>
                 <span className="note-subject">{n.subject}</span>
                 <h3>{n.title}</h3>
-                <p>
-                  {n.description ||
-                    n.source.replace(/[#*`]/g, '').slice(0, 130)}
-                </p>
+                <p>{n.excerpt}</p>
               </button>
               <div className="note-card-footer">
                 <span>
@@ -364,8 +373,7 @@ export function LibraryPage({
                     t('No folder', 'Bez folderu')}
                 </span>
                 <span>
-                  {Math.max(1, Math.ceil(n.source.split(/\s+/).length / 220))}{' '}
-                  {t('min read', 'min czytania')}
+                  {n.minutes} {t('min read', 'min czytania')}
                 </span>
               </div>
             </article>
