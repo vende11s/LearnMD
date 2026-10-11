@@ -11,8 +11,10 @@ import { useI18n } from '../i18n';
 import { sourceProps } from '../reader/source';
 import { readingMinutes } from '../format/summary';
 
-function revealActiveOutline(nav: HTMLElement | null) {
-  const button = nav?.querySelector<HTMLElement>('[aria-current="location"]');
+function revealOutlineItem(
+  nav: HTMLElement | null,
+  button = nav?.querySelector<HTMLElement>('[aria-current="location"]'),
+) {
   if (!nav || !button || nav.clientHeight === 0) return;
   const bounds = nav.getBoundingClientRect();
   const item = button.getBoundingClientRect();
@@ -132,7 +134,7 @@ export function ReaderView({
         '--reader-viewport-height',
         `${workspace.clientHeight}px`,
       );
-      revealActiveOutline(outlineNavRef.current);
+      revealOutlineItem(outlineNavRef.current);
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -140,7 +142,7 @@ export function ReaderView({
     return () => observer.disconnect();
   }, [mainRef, outline]);
   useLayoutEffect(() => {
-    revealActiveOutline(outlineNavRef.current);
+    revealOutlineItem(outlineNavRef.current);
   }, [active, outline]);
   return (
     <div className={`reader-layout ${outline ? 'with-outline' : ''}`}>
@@ -231,6 +233,14 @@ export function ReaderView({
                 className={active === h.id ? 'active' : ''}
                 aria-current={active === h.id ? 'location' : undefined}
                 style={{ paddingLeft: (h.depth - 2) * 12 }}
+                onFocus={(event) => {
+                  const button = event.currentTarget;
+                  // Correct partial clipping after the browser's focus scroll.
+                  requestAnimationFrame(() => {
+                    if (button.ownerDocument.activeElement === button)
+                      revealOutlineItem(outlineNavRef.current, button);
+                  });
+                }}
                 onClick={() => {
                   setNavigationTarget({ id: h.id, nonce: Date.now() });
                   setActive(h.id);
