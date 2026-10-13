@@ -1,5 +1,6 @@
 import { MAX_SHARE_BYTES, type ShareBundle } from '../../shared/share-contract';
 import { validateShareBundle } from './bundle';
+import { ShareSourceLimitError } from './sourceBudget';
 
 export interface CreatedShare {
   id: string;
@@ -498,6 +499,8 @@ export async function fetchShare(
       return { bundle: validateShareBundle(JSON.parse(source)), expiresAt };
     } catch (error) {
       if (error instanceof ShareError) throw error;
+      if (error instanceof ShareSourceLimitError)
+        throw new ShareError('too_complex');
       throw new ShareError('invalid_bundle');
     }
   });
@@ -555,6 +558,16 @@ export function shareErrorText(
   error: unknown,
   t: (en: string, pl: string) => string,
 ) {
+  if (error instanceof ShareSourceLimitError)
+    return t(
+      'These notes exceed the shared content limit. Split them into smaller shares.',
+      'Wybrane notatki przekraczają limit złożoności paczki. Podziel je na mniejsze paczki.',
+    );
+  if (error instanceof ShareError && error.code === 'too_complex')
+    return t(
+      'These shared notes are too complex to open safely. Ask the author to split them into smaller shares.',
+      'Ta paczka notatek jest zbyt złożona, aby bezpiecznie ją otworzyć. Poproś autora o podzielenie jej na mniejsze paczki.',
+    );
   if (!(error instanceof ShareError))
     return t(
       'This operation could not be completed. Your local notes are unchanged.',

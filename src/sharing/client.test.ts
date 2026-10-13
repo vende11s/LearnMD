@@ -546,6 +546,44 @@ describe('sharing client', () => {
     await expect(client.fetchShare(id)).rejects.toMatchObject({ status: 413 });
     expect(cancel).toHaveBeenCalledOnce();
   });
+  it('rejects a small repeated-heading bundle with a localized complexity error', async () => {
+    const attack: ShareBundle = {
+      ...bundle,
+      kind: 'folder',
+      title: 'Repeated headings',
+      folders: [{ id: 'root', name: 'Repeated headings', parentId: null }],
+      notes: Array.from({ length: 5 }, (_, index) => ({
+        id: `n${index}`,
+        title: `Chapter ${index + 1}`,
+        source: '# Repeat\n\n'.repeat(9000),
+        folderId: 'root',
+      })),
+    };
+    expect(
+      attack.notes.reduce((total, note) => total + note.source.length, 0),
+    ).toBe(450_000);
+    expect(
+      new TextEncoder().encode(JSON.stringify(attack)).byteLength,
+    ).toBeLessThan(MAX_SHARE_BYTES);
+    fetchMock.mockResolvedValueOnce(
+      Response.json(attack, {
+        headers: { 'X-Share-Expires-At': String(Date.now() + SHARE_TTL_MS) },
+      }),
+    );
+
+    const failure = await client
+      .fetchShare(id)
+      .catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(client.ShareError);
+    expect(failure).toMatchObject({ code: 'too_complex' });
+    expect(client.shareErrorText(failure, (en) => en)).toBe(
+      'These shared notes are too complex to open safely. Ask the author to split them into smaller shares.',
+    );
+    expect(client.shareErrorText(failure, (_en, pl) => pl)).toBe(
+      'Ta paczka notatek jest zbyt złożona, aby bezpiecznie ją otworzyć. Poproś autora o podzielenie jej na mniejsze paczki.',
+    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
   it('uses Retry-After and distinguishes expired links from transport failures', async () => {
     fetchMock.mockResolvedValueOnce(
       Response.json(

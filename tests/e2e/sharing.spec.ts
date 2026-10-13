@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import type { ShareBundle } from '../../shared/share-contract';
 
 const api = 'http://127.0.0.1:8787';
 const shareId = '1234567890abcdef1234567890abcdef';
@@ -365,6 +366,66 @@ test('expired link explains seven days and never imports content', async ({
     page.getByRole('button', { name: 'Add to my library', exact: true }),
   ).toHaveCount(0);
   expect((await library(page)).notes).toHaveLength(1);
+});
+
+test('rejects a repeated-heading bundle without importing or blocking the local library', async ({
+  page,
+  context,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.addInitScript(() =>
+    localStorage.setItem('learnmd-language', 'pl'),
+  );
+  await page.goto('/');
+  await expect(page.locator('.note-card')).toHaveCount(1);
+  const before = await library(page);
+  const attack: ShareBundle = {
+    format: 'learnmd-share',
+    version: 1,
+    kind: 'folder',
+    title: 'Repeated headings',
+    folders: [{ id: 'root', name: 'Repeated headings', parentId: null }],
+    notes: Array.from({ length: 5 }, (_, index) => ({
+      id: `n${index}`,
+      title: `Chapter ${index + 1}`,
+      source: '# Repeat\n\n'.repeat(9000),
+      folderId: 'root',
+    })),
+    assets: [],
+  };
+  expect(
+    attack.notes.reduce((total, note) => total + note.source.length, 0),
+  ).toBe(450_000);
+  await apiMock(context, () => ({ body: attack, expiresAt: Date.now() + ttl }));
+  await page.goto(`/#share/${shareId}`);
+
+  await expect(page.getByRole('alert')).toHaveText(
+    'Ta paczka notatek jest zbyt złożona, aby bezpiecznie ją otworzyć. Poproś autora o podzielenie jej na mniejsze paczki.',
+  );
+  await expect(
+    page.getByRole('button', {
+      name: 'Dodaj do mojej biblioteki',
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('region', { name: 'Podgląd notatki', exact: true }),
+  ).toHaveCount(0);
+  expect(await library(page)).toEqual(before);
+
+  await page
+    .getByRole('button', { name: 'Przejdź do biblioteki', exact: true })
+    .click();
+  await expect(page).toHaveURL(/#library$/);
+  await expect(page.locator('.note-card')).toHaveCount(1);
+  await page.locator('.note-card .note-open').click();
+  await expect(page).toHaveURL(new RegExp(`#note/${before.notes[0].id}$`));
+  await expect(page.locator('.learn-reader')).toBeVisible();
+  expect((await library(page)).notes.map((note) => note.id)).toEqual(
+    before.notes.map((note) => note.id),
+  );
+  expect(errors).toEqual([]);
 });
 
 test('download rate limit gives a retry time without an automatic retry loop', async ({

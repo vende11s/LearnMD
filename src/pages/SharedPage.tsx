@@ -8,6 +8,7 @@ import {
 import type { ShareBundle } from '../../shared/share-contract';
 import type { Folder } from '../storage';
 import { getSharedImport, importShareBundle } from '../sharing/bundle';
+import { ShareSourceLimitError } from '../sharing/sourceBudget';
 import {
   deleteShare,
   fetchShare,
@@ -158,7 +159,8 @@ export function SharedPage({
     } catch (failure) {
       if (alive.current)
         setError(
-          failure instanceof Error
+          failure instanceof Error &&
+            !(failure instanceof ShareSourceLimitError)
             ? failure.message
             : shareErrorText(failure, t),
         );

@@ -7,6 +7,7 @@ import {
 import { isFolderIcon } from '../folderIcons';
 import { parseLearnMD, safeUrl } from '../format/parser';
 import type { LearnNode } from '../format/types';
+import { assertShareSourceBudget } from './sourceBudget';
 import {
   db,
   MAX_ASSET_BYTES,
@@ -121,6 +122,19 @@ export function validateShareBundle(value: unknown): ShareBundle {
     data.assets.length > SHARE_ENTRY_LIMITS.assets
   )
     invalid('invalid or excessive entry count.');
+  // Reject excessive combined work before even the first Markdown parse.
+  // Per-note parser limits alone allow hundreds of expensive legal notes.
+  assertShareSourceBudget(
+    data.notes.map((raw) => {
+      const entry = record(raw);
+      if (
+        typeof entry.source !== 'string' ||
+        new Blob([entry.source]).size > MAX_FILE_BYTES
+      )
+        invalid('note source exceeds 2 MB or is missing.');
+      return entry.source;
+    }),
+  );
   const title = label(data.title, 300);
   const folders: ShareBundle['folders'] = [];
   const folderMap = new Map<string, ShareBundle['folders'][number]>();
@@ -295,6 +309,7 @@ export async function buildShareBundle(
       return { title, notes, folders, assets };
     },
   );
+  assertShareSourceBudget(snapshot.notes.map((note) => note.source));
   const noteIds = new Map(
     snapshot.notes.map((note, index) => [note.id, `note-${index + 1}`]),
   );
