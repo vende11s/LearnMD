@@ -26,6 +26,7 @@ import {
   Plus,
   Search,
   Settings2,
+  Share2,
   ShieldCheck,
   Sparkles,
   Star,
@@ -41,6 +42,10 @@ import { buildGenerationPrompt } from './format/prompt';
 import { ImportDialog } from './components/ImportDialog';
 import { LearnMDSkillPanel } from './components/LearnMDSkillPanel';
 import { ManageDialog } from './components/ManageDialog';
+import { ShareDialog } from './components/ShareDialog';
+import { SharedPage } from './pages/SharedPage';
+import { getSharingConfig } from './sharing/client';
+import type { ShareTarget } from '../shared/share-contract';
 import { FolderBranch } from './components/FolderBranch';
 import { LibraryPage } from './pages/LibraryPage';
 import { ReaderView } from './pages/ReaderView';
@@ -72,6 +77,7 @@ function AppInner() {
     confirmDelete?: boolean;
   } | null>(null);
   const [newFolder, setNewFolder] = useState(false);
+  const [sharing, setSharing] = useState<ShareTarget | null>(null);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [ready, setReady] = useState(false);
@@ -169,22 +175,26 @@ function AppInner() {
   const noteId = route.startsWith('note/') ? route.slice(5) : null;
   const note = notes.find((n) => n.id === noteId);
   const folderId = route.startsWith('folder/') ? route.slice(7) : null;
-  const pageName = note
-    ? note.title
-    : route === 'generate'
-      ? t('Generate notes', 'Generuj notatki')
-      : route === 'showcase'
-        ? t('Component guide', 'Komponenty')
-        : route === 'settings'
-          ? t('Settings', 'Ustawienia')
-          : route === 'favorites'
-            ? t('Favorites', 'Ulubione')
-            : route === 'recent'
-              ? t('Recently opened', 'Ostatnio otwierane')
-              : folderId
-                ? (folders.find((f) => f.id === folderId)?.name ??
-                  t('Folder', 'Folder'))
-                : t('All notes', 'Wszystkie notatki');
+  const shareId = route.startsWith('share/') ? route.slice(6) : null;
+  const pageName =
+    shareId !== null
+      ? t('Shared notes', 'Udostępnione notatki')
+      : note
+        ? note.title
+        : route === 'generate'
+          ? t('Generate notes', 'Generuj notatki')
+          : route === 'showcase'
+            ? t('Component guide', 'Komponenty')
+            : route === 'settings'
+              ? t('Settings', 'Ustawienia')
+              : route === 'favorites'
+                ? t('Favorites', 'Ulubione')
+                : route === 'recent'
+                  ? t('Recently opened', 'Ostatnio otwierane')
+                  : folderId
+                    ? (folders.find((f) => f.id === folderId)?.name ??
+                      t('Folder', 'Folder'))
+                    : t('All notes', 'Wszystkie notatki');
   async function openNote(id: string) {
     await run(async () => {
       await db.notes.update(id, { openedAt: Date.now() });
@@ -263,6 +273,7 @@ function AppInner() {
               setQuery(e.target.value);
               if (
                 noteId ||
+                shareId !== null ||
                 ['generate', 'settings', 'showcase'].includes(route)
               ) {
                 location.hash = 'library';
@@ -364,7 +375,14 @@ function AppInner() {
                 'All notes are stored on this device.',
                 'Wszystkie notatki są na tym urządzeniu.',
               )}
-              <small>{t('No cloud.', 'Bez chmury.')}</small>
+              {getSharingConfig().apiUrl && (
+                <small>
+                  {t(
+                    'Sharing only when you choose.',
+                    'Udostępniasz tylko, gdy chcesz.',
+                  )}
+                </small>
+              )}
             </div>
             <span className="status-dot" />
           </div>
@@ -459,6 +477,14 @@ function AppInner() {
                 </button>
                 <button
                   className="icon-button"
+                  aria-label={t('Share a copy', 'Udostępnij kopię')}
+                  title={t('Share a copy', 'Udostępnij kopię')}
+                  onClick={() => setSharing({ type: 'note', id: note.id })}
+                >
+                  <Share2 size={17} />
+                </button>
+                <button
+                  className="icon-button"
                   aria-label={t('Manage note', 'Zarządzaj notatką')}
                   onClick={() => setManage({ type: 'note', id: note.id })}
                 >
@@ -485,6 +511,13 @@ function AppInner() {
             <div className="loading">
               {t('Opening your library…', 'Otwieranie biblioteki…')}
             </div>
+          ) : shareId !== null ? (
+            <SharedPage
+              key={shareId}
+              shareId={shareId}
+              folders={folders}
+              onNavigate={navigate}
+            />
           ) : note ? (
             <ReaderView
               key={note.id}
@@ -493,6 +526,7 @@ function AppInner() {
               allowRemote={remote}
               mainRef={main}
               onError={setError}
+              onShare={() => setSharing({ type: 'note', id: note.id })}
             />
           ) : noteId ? (
             <div className="empty-state">
@@ -710,6 +744,17 @@ function AppInner() {
           }}
           onRemoved={() => navigate('library')}
           onError={setError}
+          onShare={(target) => {
+            setManage(null);
+            setSharing(target);
+          }}
+        />
+      )}
+      {sharing && (
+        <ShareDialog
+          key={`${sharing.type}/${sharing.id}`}
+          target={sharing}
+          onClose={() => setSharing(null)}
         />
       )}
     </div>

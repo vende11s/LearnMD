@@ -1,0 +1,136 @@
+.shared-page {
+  max-width: 1280px;
+}
+.shared-page > h1 {
+  overflow-wrap: anywhere;
+}
+.shared-lifetime {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.shared-import-panel {
+  background: var(--tint);
+  border-radius: 14px;
+  padding: 24px;
+  margin: 26px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.65fr);
+  gap: 30px;
+  align-items: center;
+}
+.shared-import-panel h2 {
+  font-family: 'Lora', serif;
+  font-size: 23px;
+  font-weight: 500;
+}
+.shared-import-panel p {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+.shared-import-controls .field-label {
+  margin-top: 0;
+}
+.shared-import-controls .button {
+  margin-top: 12px;
+  width: 100%;
+}
+.shared-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 32px;
+}
+.shared-tree {
+  border-right: 1px solid var(--line);
+  padding-right: 20px;
+}
+.shared-tree h2 {
+  font-size: 15px;
+}
+.shared-tree ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.shared-tree ul ul {
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+  margin-left: 7px;
+}
+.shared-tree button,
+.shared-folder-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  text-align: left;
+  font-size: 13px;
+  width: 100%;
+  border-radius: 6px;
+}
+.shared-tree button span,
+.shared-folder-label span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.shared-tree button.selected {
+  background: var(--tint);
+  color: var(--accent);
+}
+.shared-folder-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+.shared-preview {
+  min-width: 0;
+}
+.shared-preview > .eyebrow {
+  overflow-wrap: anywhere;
+}
+.shared-preview .learn-reader {
+  max-width: 780px;
+}
+.shared-imported {
+  padding: 20px;
+  margin: 24px 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.shared-imported .button-row {
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+.shared-owner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.shared-owner p {
+  margin: 0;
+}
+@media (max-width: 950px) {
+  .shared-import-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .shared-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .shared-tree {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 20px;
+  }
+}
+@media (max-width: 500px) {
+  .shared-import-panel {
+    padding: 18px;
+  }
+}

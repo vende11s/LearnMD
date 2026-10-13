@@ -1,6 +1,6 @@
 # LearnMD
 
-A local-first reader for thoughtful, interactive educational notes. React, TypeScript, IndexedDB, and an extended Markdown format. No account, backend, AI API, or document editor.
+A local-first reader for thoughtful, interactive educational notes. React, TypeScript, IndexedDB, and an extended Markdown format. Reading and organizing notes need no account or backend. Optional sharing sends only selected copies to a separate service; there is no AI API or document editor.
 
 Open [LearnMD on GitHub Pages](https://vende11s.github.io/LearnMD/).
 
@@ -59,6 +59,7 @@ Each browser and origin has its own local library. To move notes from a local de
 - **Library:** search titles and content, mark favorites, sort, and organize your own nested folders. Folders start empty; create them yourself and choose one of 16 icons, editable later. Metadata dialogs rename/move local copies. Hover or focus a note to reveal its trash action; deletion requires confirmation. Deleting a folder moves its contents into its parent. Folder icons are included in library backups.
 - **Updates:** revise a source file externally. Paste its revised contents and choose **New note** or **Replace existing note**. Replacement requires selecting the target note, keeps favorites, resets reading position, and retains existing bundled assets unless new assets are supplied. A duplicate title requires an explicit import choice. File imports always create new notes.
 - **Backup:** Settings → Export library creates a portable JSON backup containing notes, folders, favorites, and image assets. Restore validates the entire backup and adds new copies atomically, preserving existing data. An individual source export does not include image assets.
+- **Share a copy:** use the share button inside an open note or the note/folder management dialog to create a link to a snapshot of the selected content, including nested folders and used bundled images. Links are valid for **7 days**, with an expiration date shown to both sender and recipient. Anyone with the link can preview and import their own local copy. Import never overwrites an existing note; the local copy remains available after the link expires. Favorites and reading history are excluded. Sharing requires the optional service described in [sharing deployment](docs/SHARING-DEPLOYMENT.md).
 
 The library initializes with one root-level guide: **Your first steps with LearnMD** / **Pierwsze kroki z LearnMD**. It explains the workflow and demonstrates interactive components, including a carousel with different question types. Its authored text follows the selected interface language while it remains an unmodified built-in note. It can be organized or deleted normally; deleting it permanently opts out of automatic initialization, including after changing language. Imported or replaced notes are never translated automatically.
 
@@ -115,6 +116,12 @@ Directory import resolves relative image paths from each note's directory. Selec
 PNG, JPEG, GIF, WebP, and AVIF images up to 10 MB are stored as IndexedDB blobs. Each source is limited to 2 MB of UTF-8 bytes and one million characters, with further nesting, line, and AST limits documented in the format reference. Batches are capped at 200 files. Backups are capped at 100 MB. Files with validation errors are reported and skipped; all valid files in a batch are saved atomically.
 
 Remote images are blocked by default and require an explicit load action or the external-image setting. External audio/video resources require explicit activation. Links open safely in a separate tab. Raw HTML is discarded, diagrams are declarative, code is displayed rather than executed, and KaTeX uses untrusted mode with expansion/size limits.
+
+Shared packages are limited to 20 MiB, including encoded image data. They are stored in a private Cloudflare R2 bucket and accessed through a Worker that enforces the seven-day deadline on every download. Rate limits, upload and download quotas, and a total storage ceiling protect the optional service. Creating a production link includes a Turnstile verification; the challenge loads only when sharing is requested. The sender's browser retains a separate deletion secret, which is never included in the shared link. Clearing browser data loses the ability to revoke that link early; it still expires automatically. See [deployment and quota configuration](docs/SHARING-DEPLOYMENT.md).
+
+Daily sharing quotas use an anonymous server-issued browser token, so people on the same campus or dorm network have separate daily allowances. IP addresses have generous minute limits, and the service retains a global budget. The browser token is stored locally for each API address; it is not an account and can be reset by clearing browser data.
+
+A monthly circuit breaker caps R2 writes at 10,000 attempts, reads at 100,000 attempts, and stored packages at 4 GiB. When exhausted, sharing pauses until the first day of the next month at 00:00 UTC; the interface shows the reopening date and avoids further upload/download requests. Local notes remain available, while revocation and cleanup continue. These conservative limits require Workers Free and a private R2 Standard bucket with the account's free allowance reserved for this service; they are not a cap on charges from unrelated account activity. See [the free-budget setup](docs/SHARING-DEPLOYMENT.md).
 
 ## Checks
 

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Bookmark, Printer } from 'lucide-react';
+import { BookOpen, Bookmark, Printer, Share2 } from 'lucide-react';
 import { db, type Note } from '../storage';
 import { parseLearnMD } from '../format/parser';
 import { ReaderContent } from '../reader/ReaderContent';
@@ -30,12 +30,14 @@ export function ReaderView({
   allowRemote,
   mainRef,
   onError,
+  onShare,
 }: {
   note: Note;
   outline: boolean;
   allowRemote: boolean;
   mainRef: React.RefObject<HTMLElement | null>;
   onError: (s: string) => void;
+  onShare: () => void;
 }) {
   const { t } = useI18n();
   const parsed = useMemo(() => parseLearnMD(note.source), [note.source]);
@@ -292,6 +294,9 @@ export function ReaderView({
           </div>
           <button className="text-button" onClick={() => window.print()}>
             <Printer size={15} /> {t('Print note', 'Drukuj notatkę')}
+          </button>
+          <button className="text-button" onClick={onShare}>
+            <Share2 size={15} /> {t('Share a copy', 'Udostępnij kopię')}
           </button>
         </aside>
       )}

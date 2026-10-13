@@ -10,6 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:sharing": "playwright test --config playwright.sharing.config.ts",
+    "test:worker": "npm --prefix worker test",
+    "sharing:dev": "npm --prefix worker run dev",
     "skill:sync": "node scripts/sync-skill.mjs",
     "skill:check": "node scripts/sync-skill.mjs --check"
   },
