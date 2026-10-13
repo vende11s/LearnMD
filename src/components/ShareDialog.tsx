@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, Link2, Share2 } from 'lucide-react';
 import type { ShareBundle, ShareTarget } from '../../shared/share-contract';
 import { buildShareBundle } from '../sharing/bundle';
+import { ShareSourceLimitError } from '../sharing/sourceBudget';
 import {
   createShare,
   deleteShare,
@@ -61,7 +62,8 @@ export function ShareDialog({
       .catch((failure) => {
         if (live)
           setError(
-            failure instanceof Error
+            failure instanceof Error &&
+              !(failure instanceof ShareSourceLimitError)
               ? failure.message
               : shareErrorText(failure, t),
           );

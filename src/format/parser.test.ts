@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { COMPONENTS, COMPONENT_MAP } from './registry';
 import {
   extractLearnMDSource,
@@ -173,6 +173,78 @@ describe('component and metadata schemas', () => {
 });
 
 describe('semantic references and shared state', () => {
+  it('keeps heading suffixes stable across natural slugs and explicit component IDs', () => {
+    const document = parseLearnMD(
+      [
+        ':::definition{id="topic"}\nReserved base.\n:::',
+        '# Topic',
+        '# Topic 2',
+        ':::definition{id="topic-3"}\nReserved suffix.\n:::',
+        '# Topic',
+        '# Topic-2',
+        ':::definition{id="topic-5"}\nAnother reserved suffix.\n:::',
+        '# Topic',
+        '# Topic 3',
+        '# Topic',
+        '# Topic 7',
+      ].join('\n\n'),
+    );
+    expect(document.diagnostics).toEqual([]);
+    expect(document.headings.map((heading) => heading.id)).toEqual([
+      'topic-2',
+      'topic-2-2',
+      'topic-4',
+      'topic-2-3',
+      'topic-6',
+      'topic-3-2',
+      'topic-7',
+      'topic-7-2',
+    ]);
+  });
+
+  it('still rejects explicit IDs that collide with previously generated heading IDs', () => {
+    const document = parseLearnMD(
+      '# Topic\n\n# Topic\n\n:::definition{id="topic-2"}\nDuplicate.\n:::\n\n# Topic',
+    );
+    expect(document.headings.map((heading) => heading.id)).toEqual([
+      'topic',
+      'topic-2',
+      'topic-3',
+    ]);
+    expect(document.diagnostics).toEqual([
+      expect.objectContaining({
+        severity: 'error',
+        message: expect.stringContaining('Duplicate semantic ID "topic-2"'),
+      }),
+    ]);
+  });
+
+  it('allocates repeated heading IDs with a linear number of collision checks', () => {
+    const count = 256;
+    const lookups = vi.spyOn(Map.prototype, 'has');
+    try {
+      const document = parseLearnMD(
+        '# Collision stress heading\n\n'.repeat(count),
+      );
+      expect(document.diagnostics).toEqual([]);
+      expect(document.headings.map((heading) => heading.id)).toEqual(
+        Array.from({ length: count }, (_, index) =>
+          index === 0
+            ? 'collision-stress-heading'
+            : `collision-stress-heading-${index + 1}`,
+        ),
+      );
+      const collisionChecks = lookups.mock.calls.filter(
+        ([key]) =>
+          typeof key === 'string' &&
+          /^collision-stress-heading(?:-\d+)?$/.test(key),
+      ).length;
+      expect(collisionChecks).toBeLessThanOrEqual(4 * count);
+    } finally {
+      lookups.mockRestore();
+    }
+  });
+
   it('resolves forward references and rejects dangling or duplicate IDs', () => {
     expect(
       errors(
@@ -222,6 +294,37 @@ describe('semantic references and shared state', () => {
       ':::::sync{group="local"}\n::::steps\n:::step\nOne\n:::\n::::\n:::::';
     const outside = '::::steps\n:::step\nOne\n:::\n:::step\nTwo\n:::\n::::';
     expect(parseLearnMD(`${first}\n\n${outside}`).diagnostics).toEqual([]);
+  });
+
+  it('collects large synchronization groups without repeatedly copying earlier members', () => {
+    const count = 128;
+    const block = '::::steps\n:::step\nOne.\n:::\n::::';
+    const source = `:::::sync{group="stress-sync-group"}\n${Array.from(
+      { length: count },
+      () => block,
+    ).join('\n\n')}\n:::::`;
+    const writes = vi.spyOn(Map.prototype, 'set');
+    try {
+      const document = parseLearnMD(source);
+      expect(document.diagnostics).toEqual([]);
+      expect(document.children[0].children).toHaveLength(count);
+      const groupArrays = new Set<number[]>(
+        writes.mock.calls
+          .filter(
+            ([key, value]) =>
+              key === 'stress-sync-group' && Array.isArray(value),
+          )
+          .map(([, value]) => value as number[]),
+      );
+      const storedMembers = [...groupArrays].reduce(
+        (total, sizes) => total + sizes.length,
+        0,
+      );
+      expect(storedMembers).toBeGreaterThanOrEqual(count);
+      expect(storedMembers).toBeLessThanOrEqual(2 * count);
+    } finally {
+      writes.mockRestore();
+    }
   });
 
   it('scopes diagram node IDs locally and checks every connection', () => {

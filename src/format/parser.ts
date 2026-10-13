@@ -383,6 +383,7 @@ export function parseLearnMD(input: string): ParsedDocument {
       (node) => node.type !== 'yaml',
     );
     const semanticIds = new Map<string, LearnNode>();
+    const headingSuffixes = new Map<string, number>();
     const variables = new Map<string, LearnNode>();
     const references: LearnNode[] = [];
     const consumers: LearnNode[] = [];
@@ -435,8 +436,11 @@ export function parseLearnMD(input: string): ParsedDocument {
           if (!firstTitle && node.depth === 1) firstTitle = title;
           let slug = slugify(title);
           const base = slug;
-          let suffix = 1;
+          // Claimed IDs never disappear, so each base only needs to check new
+          // suffixes. Restarting at 2 makes repeated headings quadratic.
+          let suffix = headingSuffixes.get(base) ?? 1;
           while (semanticIds.has(slug)) slug = `${base}-${++suffix}`;
+          headingSuffixes.set(base, suffix);
           claimId(slug, node);
           result.headings.push({
             id: slug,
@@ -568,10 +572,9 @@ export function parseLearnMD(input: string): ParsedDocument {
             const length = (node.children ?? []).filter(
               (child) => child.name,
             ).length;
-            syncGroups.set(nodeGroup, [
-              ...(syncGroups.get(nodeGroup) ?? []),
-              length,
-            ]);
+            const sizes = syncGroups.get(nodeGroup);
+            if (sizes) sizes.push(length);
+            else syncGroups.set(nodeGroup, [length]);
           }
           if (diagrams.has(node.name)) {
             const localNodes = (node.children ?? []).filter((child) =>

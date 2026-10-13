@@ -17,6 +17,7 @@ import {
 } from '../sharing/client';
 import { I18nProvider, LANGUAGE_KEY } from '../i18n';
 import type { ShareBundle } from '../../shared/share-contract';
+import { ShareSourceLimitError } from '../sharing/sourceBudget';
 
 vi.mock('./Modal', () => ({
   Modal: ({ children, title }: { children: ReactNode; title: string }) => (
@@ -68,6 +69,25 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('sharing dialog', () => {
+  it('explains an over-complex local bundle in Polish and never starts an upload', async () => {
+    localStorage.setItem(LANGUAGE_KEY, 'pl');
+    vi.mocked(buildShareBundle).mockRejectedValue(new ShareSourceLimitError());
+    render(
+      <I18nProvider>
+        <ShareDialog
+          target={{ type: 'folder', id: 'root' }}
+          onClose={() => {}}
+        />
+      </I18nProvider>,
+    );
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(
+      'Wybrane notatki przekraczają limit złożoności paczki. Podziel je na mniejsze paczki.',
+    );
+    expect(alert).not.toHaveTextContent('Shared notes exceed');
+    expect(screen.getByRole('button', { name: 'Utwórz link' })).toBeDisabled();
+    expect(createShare).not.toHaveBeenCalled();
+  });
   it('shows a localized reset date instead of a long countdown and waits for a manual upload after reset', async () => {
     const resetAt = Date.UTC(2026, 10, 1);
     const receivedAt = resetAt - 3600000;
