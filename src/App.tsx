@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Clock3,
   Copy,
+  Github,
   Grid2X2,
   HardDrive,
   Library,
@@ -492,6 +493,16 @@ function AppInner() {
                 </button>
               </>
             )}
+            <a
+              className="icon-button"
+              href="https://github.com/vende11s/LearnMD"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('LearnMD on GitHub', 'LearnMD na GitHubie')}
+              title={t('LearnMD on GitHub', 'LearnMD na GitHubie')}
+            >
+              <Github size={18} aria-hidden="true" />
+            </a>
           </div>
         </header>
         {error && (

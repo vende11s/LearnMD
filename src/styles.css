@@ -448,6 +448,7 @@ kbd {
 .topbar-actions {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 5px;
   margin-left: 12px;
 }
