@@ -39,6 +39,7 @@ import { db, exportLibrary, download } from './storage';
 import { initializeLibrary } from './librarySetup';
 import { buildGenerationPrompt } from './format/prompt';
 import { ImportDialog } from './components/ImportDialog';
+import { LearnMDSkillPanel } from './components/LearnMDSkillPanel';
 import { ManageDialog } from './components/ManageDialog';
 import { FolderBranch } from './components/FolderBranch';
 import { LibraryPage } from './pages/LibraryPage';
@@ -529,8 +530,8 @@ function AppInner() {
                 )}
                 <br />
                 {t(
-                  'One prompt is all you need to get started.',
-                  'Na początek wystarczy jeden prompt.',
+                  'Copy the prompt, or install the LearnMD skill in your AI agent.',
+                  'Skopiuj prompt lub zainstaluj skill LearnMD w swoim agencie AI.',
                 )}
               </p>
               <div className="generation-steps">
@@ -602,6 +603,7 @@ function AppInner() {
                   <pre tabIndex={0}>{buildGenerationPrompt()}</pre>
                 </details>
               </div>
+              <LearnMDSkillPanel />
               <div className="privacy-note">
                 <ShieldCheck size={21} />
                 <div>

@@ -1,0 +1,70 @@
+.learnmd-skill-panel {
+  margin-top: 18px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.learnmd-skill-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+.learnmd-skill-heading > svg {
+  color: var(--accent);
+}
+.learnmd-skill-heading h3 {
+  margin: 0 0 7px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.learnmd-skill-heading p,
+.learnmd-skill-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.learnmd-skill-command {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+.learnmd-skill-command code {
+  flex: 1 1 250px;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--page);
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.learnmd-skill-status {
+  min-height: 18px;
+  margin: 6px 0 8px;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.learnmd-skill-link {
+  margin-top: 9px;
+  text-decoration: none;
+}
+.learnmd-skill-link:hover {
+  text-decoration: underline;
+}
+@media (max-width: 600px) {
+  .learnmd-skill-panel {
+    padding: 20px;
+  }
+  .learnmd-skill-command .button {
+    width: 100%;
+  }
+}
