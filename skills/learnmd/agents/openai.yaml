@@ -1,0 +1,4 @@
+interface:
+  display_name: "LearnMD"
+  short_description: "Create and repair interactive LearnMD study notes"
+  default_prompt: "Use $learnmd to turn my materials into a clear, interactive .learn.md study note."

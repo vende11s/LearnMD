@@ -4,6 +4,26 @@ A local-first reader for thoughtful, interactive educational notes. React, TypeS
 
 Open [LearnMD on GitHub Pages](https://vende11s.github.io/LearnMD/).
 
+## Agent skill
+
+Install the **learnmd** skill to create, convert, or repair `.learn.md` study notes with a compatible AI agent:
+
+```sh
+npx skills add vende11s/LearnMD
+```
+
+The installer discovers [skills/learnmd](skills/learnmd/SKILL.md) and lets you choose your agent. For a non-interactive, project-local Codex installation:
+
+```sh
+npx skills add vende11s/LearnMD --skill learnmd --agent codex -y
+```
+
+Ask, for example: “Use the learnmd skill to turn these lecture notes into a Polish `.learn.md` lesson with worked examples and a short quiz.” The skill includes its own complete format reference, so the application repository is not needed after installation. Import the resulting note in the [LearnMD reader](https://vende11s.github.io/LearnMD/).
+
+The [skills CLI](https://skills.sh/docs) installs from a repository or URL; `npx skills add learnmd` is not a supported global package alias. Publishing this skill means pushing its folder to this public repository's default branch, with no npm package release required.
+
+Maintainers: after changing the format registry or reference generator, run `npm run skill:sync` and commit the updated bundled reference. `npm run skill:check` checks that it is current and runs in CI.
+
 ## Run locally
 
 Requires Node.js 22.12 or later (Node 22 LTS recommended).
