@@ -22,8 +22,8 @@ export function CopyDocumentSource({ source }: { source: string }) {
       </button>
       <p id={description}>
         {t(
-          'Paste the source into your LLM to give it context and ask follow-up questions.',
-          'Wklej źródło do swojego LLM-a, aby przekazać mu kontekst i dopytać o to, czego nie rozumiesz.',
+          'Copy the source and paste it into your LLM to give it context, ask follow-up questions, or request edits to the note.',
+          'Skopiuj źródło i wklej je do swojego LLM-a, aby przekazać mu kontekst, dopytać o to, czego nie rozumiesz, lub poprosić o edycję notatki.',
         )}
       </p>
       {error && (

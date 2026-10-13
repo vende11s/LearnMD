@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Bookmark, Printer, Share2 } from 'lucide-react';
-import { db, type Note } from '../storage';
+import { ArrowDownToLine, BookOpen, Bookmark, Printer, Share2 } from 'lucide-react';
+import { db, download, type Note } from '../storage';
 import { parseLearnMD } from '../format/parser';
 import { ReaderContent } from '../reader/ReaderContent';
 import {
@@ -297,6 +297,18 @@ export function ReaderView({
           </button>
           <button className="text-button" onClick={onShare}>
             <Share2 size={15} /> {t('Share a copy', 'Udostępnij kopię')}
+          </button>
+          <button
+            className="text-button"
+            onClick={() =>
+              download(
+                note.source,
+                `${note.title.replace(/[<>:"/\\|?*]/g, '-')}.learn.md`,
+              )
+            }
+          >
+            <ArrowDownToLine size={15} />
+            {t('Export as a file', 'Eksportuj jako plik')}
           </button>
         </aside>
       )}

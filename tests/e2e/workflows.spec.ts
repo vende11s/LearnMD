@@ -487,7 +487,7 @@ test('every public component opens in the live gallery without renderer or math 
   expect(errors).toEqual([]);
 });
 
-test('untrusted HTML stays inert and external images require an explicit load', async ({
+test('untrusted HTML stays inert and external images follow the saved setting', async ({
   page,
 }) => {
   const requests: string[] = [];
@@ -513,6 +513,25 @@ test('untrusted HTML stays inert and external images require an explicit load', 
   await expect(
     page.getByRole('link', { name: 'An unsafe action' }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole('img', { name: 'An external diagram' }),
+  ).toBeVisible();
+  await expect.poll(() => requests.length).toBe(1);
+
+  const noteUrl = page.url();
+  await page.goto('/#settings');
+  const remoteImages = page.getByRole('checkbox', {
+    name: 'Allow external images',
+  });
+  await expect(remoteImages).toBeChecked();
+  await remoteImages.uncheck();
+  await page.reload();
+  await expect(remoteImages).not.toBeChecked();
+  requests.length = 0;
+  await page.goto(noteUrl);
+  await expect(
+    page.getByRole('button', { name: 'Load image from example.test', exact: true }),
+  ).toBeVisible();
   expect(requests).toEqual([]);
   await page
     .getByRole('button', { name: 'Load image from example.test', exact: true })

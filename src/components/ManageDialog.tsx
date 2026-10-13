@@ -212,8 +212,8 @@ export function ManageDialog({
       {isNote && (
         <p className="fineprint">
           {t(
-            'Source export excludes bundled images. Use Settings → Export library to preserve all assets.',
-            'Eksport źródła nie zawiera dołączonych obrazów. Aby zachować wszystkie pliki, wybierz Ustawienia → Eksportuj bibliotekę.',
+            'Source export excludes bundled images. Use Settings → Export library to save all your notes.',
+            'Eksport źródła nie zawiera dołączonych obrazów. Aby zapisać wszystkie swoje notatki, wybierz Ustawienia → Eksportuj bibliotekę.',
           )}
         </p>
       )}

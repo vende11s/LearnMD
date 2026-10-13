@@ -16,3 +16,47 @@
   color: var(--accent);
   white-space: nowrap;
 }
+.import-destination {
+  flex: 1;
+  min-width: 0;
+}
+.import-destination-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.import-destination-heading .text-button {
+  padding: 0;
+  gap: 5px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.import-new-folder {
+  padding: 14px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--tint);
+}
+.import-new-folder .field-label {
+  margin: 0;
+}
+.import-new-folder .field-label + .field-label {
+  margin-top: 12px;
+}
+.import-new-folder-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.import-new-folder-footer .fineprint {
+  margin: 0;
+}
+.import-new-folder-footer .text-button {
+  padding: 0;
+  font-size: 11px;
+}

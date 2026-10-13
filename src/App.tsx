@@ -66,7 +66,7 @@ function AppInner() {
     'light',
   );
   const [sort, setSort] = useStored('learnmd-sort', 'recent');
-  const [remote, setRemote] = useStored('learnmd-remote', false);
+  const [remote, setRemote] = useStored('learnmd-remote', true);
   const [sidebar, setSidebar] = useState(false);
   const [focus, setFocus] = useState(false);
   const [outline, setOutline] = useState(true);
@@ -516,6 +516,7 @@ function AppInner() {
               key={shareId}
               shareId={shareId}
               folders={folders}
+              allowRemote={remote}
               onNavigate={navigate}
             />
           ) : note ? (

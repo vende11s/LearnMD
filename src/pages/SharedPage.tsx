@@ -36,9 +36,11 @@ function importRoute(result: ImportResult) {
 function SharedPreview({
   note,
   bundle,
+  allowRemote,
 }: {
   note: ShareBundle['notes'][number];
   bundle: ShareBundle;
+  allowRemote: boolean;
 }) {
   const parsed = useMemo(() => parseLearnMD(note.source), [note.source]);
   const assets = useMemo(() => {
@@ -50,17 +52,19 @@ function SharedPreview({
     return map;
   }, [note.id, bundle]);
   return (
-    <ReaderContent document={parsed} assets={assets} allowRemote={false} />
+    <ReaderContent document={parsed} assets={assets} allowRemote={allowRemote} />
   );
 }
 
 export function SharedPage({
   shareId,
   folders,
+  allowRemote = true,
   onNavigate,
 }: {
   shareId: string;
   folders: Folder[];
+  allowRemote?: boolean;
   onNavigate: (path: string) => void;
 }) {
   const { t, language } = useI18n();
@@ -415,6 +419,7 @@ export function SharedPage({
                     key={selected.id}
                     note={selected}
                     bundle={bundle}
+                    allowRemote={allowRemote}
                   />
                 </>
               ) : (

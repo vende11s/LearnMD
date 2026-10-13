@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   AlertCircle,
   FolderOpen,
+  FolderPlus,
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
@@ -22,6 +23,8 @@ import {
   type Folder,
   type Note,
 } from '../storage';
+
+const NEW_FOLDER_VALUE = '__new-folder__';
 
 export function ImportDialog({
   notes,
@@ -47,6 +50,9 @@ export function ImportDialog({
   >([]);
   const [assets, setAssets] = useState<File[]>([]);
   const [folder, setFolder] = useState(initialFolder ?? '');
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [folderName, setFolderName] = useState('');
+  const [parentFolder, setParentFolder] = useState(initialFolder ?? '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState(false);
@@ -54,6 +60,7 @@ export function ImportDialog({
   const [replaceId, setReplaceId] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const dirInput = useRef<HTMLInputElement>(null);
+  const newFolderButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const t = setTimeout(() => setValidation(source), 250);
     return () => clearTimeout(t);
@@ -138,6 +145,7 @@ export function ImportDialog({
         );
   const canImport =
     !busy &&
+    (!creatingFolder || !!folderName.trim()) &&
     (tab === 'paste'
       ? !!source.trim() &&
         validation === source &&
@@ -165,6 +173,25 @@ export function ImportDialog({
             );
       let first = '';
       await db.transaction('rw', db.notes, db.assets, db.folders, async () => {
+        let destination = folder || null;
+        if (creatingFolder) {
+          if (parentFolder && !(await db.folders.get(parentFolder))) {
+            throw new Error(
+              t(
+                'The parent folder no longer exists. Choose another folder.',
+                'Folder nadrzędny już nie istnieje. Wybierz inny folder.',
+              ),
+            );
+          }
+          const newFolder: Folder = {
+            id: crypto.randomUUID(),
+            name: folderName.trim(),
+            parentId: parentFolder || null,
+            icon: 'folder',
+          };
+          await db.folders.add(newFolder);
+          destination = newFolder.id;
+        }
         for (const item of sources) {
           const base = item.path.includes('/')
             ? item.path.slice(0, item.path.lastIndexOf('/') + 1)
@@ -187,7 +214,7 @@ export function ImportDialog({
                     ''),
               }),
             }));
-          const note = await importNote(item.source, folder || null, {
+          const note = await importNote(item.source, destination, {
             replaceId:
               tab === 'paste' && importMode === 'replace'
                 ? replaceId
@@ -414,9 +441,42 @@ export function ImportDialog({
         </>
       )}
       <div className="import-options">
-        <label>
-          {t('Save to', 'Zapisz w')}
-          <select value={folder} onChange={(e) => setFolder(e.target.value)}>
+        <div className="import-destination">
+          <div className="import-destination-heading">
+            <label htmlFor="import-folder">{t('Save to', 'Zapisz w')}</label>
+            <button
+              ref={newFolderButton}
+              type="button"
+              className="text-button"
+              disabled={busy}
+              aria-expanded={creatingFolder}
+              aria-controls="import-new-folder"
+              onClick={() => {
+                setCreatingFolder(!creatingFolder);
+                setFolderName('');
+                setParentFolder(folder);
+              }}
+            >
+              <FolderPlus size={14} aria-hidden="true" />
+              {t('New folder', 'Nowy folder')}
+            </button>
+          </div>
+          <select
+            id="import-folder"
+            value={creatingFolder ? NEW_FOLDER_VALUE : folder}
+            disabled={busy}
+            onChange={(e) => {
+              if (e.target.value === NEW_FOLDER_VALUE) return;
+              setFolder(e.target.value);
+              setCreatingFolder(false);
+              setFolderName('');
+            }}
+          >
+            {creatingFolder && (
+              <option value={NEW_FOLDER_VALUE}>
+                {folderName.trim() || t('New folder', 'Nowy folder')}
+              </option>
+            )}
             <option value="">{t('All notes', 'Wszystkie notatki')}</option>
             {folders.map((f) => (
               <option key={f.id} value={f.id}>
@@ -424,7 +484,7 @@ export function ImportDialog({
               </option>
             ))}
           </select>
-        </label>
+        </div>
         {tab === 'paste' && (
           <label>
             {t('Import as', 'Importuj jako')}
@@ -448,6 +508,58 @@ export function ImportDialog({
           </label>
         )}
       </div>
+      {creatingFolder && (
+        <div id="import-new-folder" className="import-new-folder">
+          <label className="field-label" htmlFor="import-folder-name">
+            {t('Folder name', 'Nazwa folderu')}
+            <input
+              id="import-folder-name"
+              autoFocus
+              value={folderName}
+              maxLength={200}
+              disabled={busy}
+              onChange={(e) => setFolderName(e.target.value)}
+              aria-describedby="import-folder-hint"
+            />
+          </label>
+          <label className="field-label" htmlFor="import-parent-folder">
+            {t('Parent folder', 'Folder nadrzędny')}
+            <select
+              id="import-parent-folder"
+              value={parentFolder}
+              disabled={busy}
+              onChange={(e) => setParentFolder(e.target.value)}
+            >
+              <option value="">{t('All notes', 'Wszystkie notatki')}</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {folderLabel(f, folders)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="import-new-folder-footer">
+            <p id="import-folder-hint" className="fineprint">
+              {t(
+                'The folder will be created when you import your notes.',
+                'Folder zostanie utworzony podczas importowania notatek.',
+              )}
+            </p>
+            <button
+              type="button"
+              className="text-button"
+              disabled={busy}
+              onClick={() => {
+                setCreatingFolder(false);
+                setFolderName('');
+                newFolderButton.current?.focus();
+              }}
+            >
+              {t('Cancel', 'Anuluj')}
+            </button>
+          </div>
+        </div>
+      )}
       {tab === 'paste' && importMode === 'replace' && (
         <label className="field-label">
           {t('Note to replace', 'Notatka do zastąpienia')}
