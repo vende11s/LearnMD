@@ -43,8 +43,8 @@ export function LearnMDSkillPanel() {
           </h3>
           <p>
             {t(
-              'Install the learnmd skill in Codex, Claude Code, or Cursor. It teaches your agent to create and improve .learn.md notes with quizzes, diagrams, and formulas.',
-              'Zainstaluj skill learnmd w Codex, Claude Code lub Cursor. Uczy agenta tworzyć i poprawiać notatki .learn.md z quizami, diagramami i wzorami.',
+              'Install the learnmd skill in Codex, Claude Code, Cursor, or another compatible AI agent. It teaches your agent to create and improve .learn.md notes with quizzes, diagrams, and formulas.',
+              'Zainstaluj skill learnmd w Codex, Claude Code, Cursor lub innym kompatybilnym agencie AI. Uczy agenta tworzyć i poprawiać notatki .learn.md z quizami, diagramami i wzorami.',
             )}
           </p>
         </div>
