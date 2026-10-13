@@ -1,0 +1,44 @@
+.share-lifetime,
+.share-summary,
+.share-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.share-lifetime {
+  background: var(--tint);
+  color: var(--accent);
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin: 8px 0 22px;
+}
+.share-summary {
+  padding: 0 0 18px;
+  overflow-wrap: anywhere;
+}
+.share-summary p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.share-success {
+  color: var(--accent);
+  font-weight: 600;
+}
+.share-actions {
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.share-actions a {
+  text-decoration: none;
+}
+.share-verification {
+  margin: 20px 0;
+  min-width: 0;
+}
+.share-unavailable {
+  line-height: 1.65;
+}
+.share-manage-action {
+  margin-top: 20px;
+}

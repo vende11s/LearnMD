@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDownToLine } from 'lucide-react';
+import { ArrowDownToLine, Share2 } from 'lucide-react';
 import {
   db,
   download,
@@ -24,6 +24,7 @@ export function ManageDialog({
   onClose,
   onRemoved,
   onError,
+  onShare,
   initialConfirm = false,
 }: {
   target: { type: 'note' | 'folder'; id: string } | null;
@@ -34,6 +35,7 @@ export function ManageDialog({
   onClose: () => void;
   onRemoved: () => void;
   onError: (s: string) => void;
+  onShare?: (target: { type: 'note' | 'folder'; id: string }) => void;
   initialConfirm?: boolean;
 }) {
   const { t } = useI18n();
@@ -151,6 +153,24 @@ export function ManageDialog({
         <p className="error-banner" role="alert">
           {localError}
         </p>
+      )}
+      {!newFolder && target && onShare && (
+        <div className="share-manage-action">
+          <button
+            className="button secondary"
+            disabled={busy}
+            onClick={() => onShare(target)}
+          >
+            <Share2 size={16} />
+            {t('Share a copy', 'Udostępnij kopię')}
+          </button>
+          <p className="fineprint">
+            {t(
+              'Share saved notes with a link valid for 7 days.',
+              'Udostępnij zapisane notatki linkiem ważnym przez 7 dni.',
+            )}
+          </p>
+        </div>
       )}
       <div className="modal-footer">
         <div>

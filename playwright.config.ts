@@ -16,7 +16,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: '**/offline.spec.ts',
+      testIgnore: ['**/offline.spec.ts', '**/sharing.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 1000 },
@@ -24,7 +24,7 @@ export default defineConfig({
     },
     {
       name: 'firefox',
-      testIgnore: '**/offline.spec.ts',
+      testIgnore: ['**/offline.spec.ts', '**/sharing.spec.ts'],
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1440, height: 1000 },

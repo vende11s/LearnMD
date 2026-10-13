@@ -51,7 +51,7 @@ test('starts with one guide and opens generation directly from a clear import di
   await expect(page.locator('.local-message')).toContainText(
     'All notes are stored on this device.',
   );
-  await expect(page.locator('.local-message')).toContainText('No cloud.');
+  await expect(page.locator('.local-message')).not.toContainText('No cloud.');
 
   await page
     .locator('.sidebar')

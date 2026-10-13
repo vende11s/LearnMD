@@ -1,0 +1,107 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "learnmd-sharing",
+  "account_id": "3d7e8dd107ff9e6b10a826103baab744",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "ENVIRONMENT": "production",
+    "ALLOWED_ORIGINS": "https://vende11s.github.io",
+    "TURNSTILE_HOSTNAMES": "vende11s.github.io",
+    "SESSIONS_GLOBAL_DAY": "10000",
+    "UPLOADS_PER_CLIENT_DAY": "20",
+    "UPLOAD_BYTES_PER_CLIENT_DAY": "104857600",
+    "UPLOADS_GLOBAL_DAY": "500",
+    "UPLOAD_BYTES_GLOBAL_DAY": "524288000",
+    "STORAGE_BYTES_LIMIT": "4294967296",
+    "R2_WRITES_MONTH": "10000",
+    "R2_READS_MONTH": "100000",
+    "READS_PER_CLIENT_DAY": "500",
+    "READ_BYTES_PER_CLIENT_DAY": "1073741824",
+    "READS_GLOBAL_DAY": "10000",
+    "READ_BYTES_GLOBAL_DAY": "10737418240",
+  },
+  "r2_buckets": [{ "binding": "SHARES", "bucket_name": "learnmd-shares" }],
+  "durable_objects": {
+    "bindings": [
+      { "name": "SHARE_COORDINATOR", "class_name": "ShareCoordinator" },
+    ],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ShareCoordinator"] }],
+  "ratelimits": [
+    {
+      "name": "SESSION_RATE_LIMITER",
+      "namespace_id": "1004",
+      "simple": { "limit": 600, "period": 60 },
+    },
+    {
+      "name": "UPLOAD_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 300, "period": 60 },
+    },
+    {
+      "name": "READ_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 1200, "period": 60 },
+    },
+    {
+      "name": "DELETE_RATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 300, "period": 60 },
+    },
+  ],
+  "env": {
+    "local": {
+      "name": "learnmd-sharing-local",
+      "vars": {
+        "ENVIRONMENT": "local",
+        "ALLOWED_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,http://localhost:5183,http://127.0.0.1:5183",
+        "TURNSTILE_HOSTNAMES": "localhost,127.0.0.1",
+        "SESSIONS_GLOBAL_DAY": "10000",
+        "UPLOADS_PER_CLIENT_DAY": "20",
+        "UPLOAD_BYTES_PER_CLIENT_DAY": "104857600",
+        "UPLOADS_GLOBAL_DAY": "500",
+        "UPLOAD_BYTES_GLOBAL_DAY": "524288000",
+        "STORAGE_BYTES_LIMIT": "4294967296",
+        "R2_WRITES_MONTH": "10000",
+        "R2_READS_MONTH": "100000",
+        "READS_PER_CLIENT_DAY": "500",
+        "READ_BYTES_PER_CLIENT_DAY": "1073741824",
+        "READS_GLOBAL_DAY": "10000",
+        "READ_BYTES_GLOBAL_DAY": "10737418240",
+      },
+      "r2_buckets": [
+        { "binding": "SHARES", "bucket_name": "learnmd-shares-local" },
+      ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "SHARE_COORDINATOR", "class_name": "ShareCoordinator" },
+        ],
+      },
+      "ratelimits": [
+        {
+          "name": "SESSION_RATE_LIMITER",
+          "namespace_id": "2004",
+          "simple": { "limit": 600, "period": 60 },
+        },
+        {
+          "name": "UPLOAD_RATE_LIMITER",
+          "namespace_id": "2001",
+          "simple": { "limit": 300, "period": 60 },
+        },
+        {
+          "name": "READ_RATE_LIMITER",
+          "namespace_id": "2002",
+          "simple": { "limit": 1200, "period": 60 },
+        },
+        {
+          "name": "DELETE_RATE_LIMITER",
+          "namespace_id": "2003",
+          "simple": { "limit": 300, "period": 60 },
+        },
+      ],
+    },
+  },
+}
